@@ -1,3 +1,59 @@
-@@startuml
+@startuml BaseEntities
 
-@enduml
+class Excercise {
+    + Id 
+    + Level
+    + Description 
+    + Muscle 
+    + SecondaryMuscle 
+}
+
+interface IEquipmentable{
+    + Equipment
+}
+
+class DurationableExcercise{
+
+}
+
+class RepeatableExcercise {
+
+}
+
+class EquipmentableDurationableExcercise {
+
+}
+
+class EquipmentableRepeatableExcercise {
+
+}
+
+class Weight {
+    - Mass 
+    + GetMass()
+}
+
+class Set{
+    + SetsCount
+}
+
+class Machine{
+}
+
+class Equipment {
+    + Name
+}
+
+DurationableExcercise <|-- Excercise
+RepeatableExcercise <|-- Excercise
+
+
+EquipmentableDurationableExcercise <|-- DurationableExcercise
+EquipmentableRepeatableExcercise <|-- RepeatableExcercise
+
+EquipmentableDurationableExcercise <|.. IEquipmentable
+EquipmentableRepeatableExcercise <|.. IEquipmentable
+
+Machine <|-- Equipment
+Weight <|-- Equipment
+@enduml 
