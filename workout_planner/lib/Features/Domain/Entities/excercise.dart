@@ -49,13 +49,38 @@ mixin Equipmentable {
   late Equipment equipment;
 }
 
-class EquipmentableExcercise {
-  final Excercise excercise;
-  final Equipment equipment;
-
-  EquipmentableExcercise(this.excercise, this.equipment);
-
-  int get id => excercise.id;
-  int get level => excercise.level;
-  String get description => excercise.description;
+class RepeatableEquipmentableExcercise extends RepeatableExcercise
+    with Equipmentable {
+  RepeatableEquipmentableExcercise(
+    int id,
+    int level,
+    int reps,
+    int rounds,
+    Equipment equipment,
+  ) : super(id, level, reps, rounds) {
+    this.equipment = equipment;
+  }
 }
+
+class DurationableEquipmentableExcercise extends DurationableExcercise
+    with Equipmentable {
+  DurationableEquipmentableExcercise(
+    int id,
+    int level,
+    double duration,
+    Equipment equipment,
+  ) : super(id, level, duration) {
+    this.equipment = equipment;
+  }
+}
+
+// class EquipmentableExcercise {
+//   final Excercise excercise;
+//   final Equipment equipment;
+
+//   EquipmentableExcercise(this.excercise, this.equipment);
+
+//   int get id => excercise.id;
+//   int get level => excercise.level;
+//   String get description => excercise.description;
+// }
