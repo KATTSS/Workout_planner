@@ -47,6 +47,14 @@ class User {
     - _name : String 
 }
 
+class WorkoutHistory {
+    id : int
+    date : String 
+    muscleGroup : String
+    excerciseList : String
+    isDone : bool 
+}
+
 DurationableExcercise <|-- Excercise
 RepeatableExcercise <|-- Excercise
 
