@@ -8,7 +8,7 @@ class Excercise {
     + SecondaryMuscle 
 }
 
-interface IEquipmentable{
+interface Equipmentable{
     + Equipment
 }
 
@@ -33,15 +33,18 @@ class Weight {
     + GetMass()
 }
 
-class Set{
-    + SetsCount
-}
-
 class Machine{
 }
 
 class Equipment {
     + Name
+}
+
+class User {
+    - _sex : int 
+    - _weight : double 
+    - _height : double 
+    - _name : String 
 }
 
 DurationableExcercise <|-- Excercise
@@ -51,8 +54,8 @@ RepeatableExcercise <|-- Excercise
 EquipmentableDurationableExcercise <|-- DurationableExcercise
 EquipmentableRepeatableExcercise <|-- RepeatableExcercise
 
-EquipmentableDurationableExcercise <|.. IEquipmentable
-EquipmentableRepeatableExcercise <|.. IEquipmentable
+EquipmentableDurationableExcercise <|.. Equipmentable
+EquipmentableRepeatableExcercise <|.. Equipmentable
 
 Machine <|-- Equipment
 Weight <|-- Equipment
