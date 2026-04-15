@@ -40,21 +40,6 @@ class Equipment {
     + Name
 }
 
-class User {
-    - _sex : int 
-    - _weight : double 
-    - _height : double 
-    - _name : String 
-}
-
-class WorkoutHistory {
-    id : int
-    date : String 
-    muscleGroup : String
-    excerciseList : String
-    isDone : bool 
-}
-
 DurationableExcercise <|-- Excercise
 RepeatableExcercise <|-- Excercise
 
