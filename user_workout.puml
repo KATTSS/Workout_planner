@@ -15,4 +15,10 @@ class WorkoutHistory {
     isDone : bool 
 }
 
+abstract class IHistoryRepo {
+    + saveHistory(workout: WOrkoutHistory): Future<void>
+}
+
+IHistoryRepo ..> WorkoutHistory
+
 @enduml

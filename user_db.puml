@@ -1,0 +1,45 @@
+@startuml User_DB
+
+class UserHistDb {
+    - {static, late} _db: Database
+    - {static} _isInitializes: bool
+    + {statuc, final} instance: UserHistDb
+
+    - {async} _createDB(db:Database, version: int): Future<void>
+    - _dbName(type: Type): String
+    + {async} init(): Future<void>
+    + {async} insert : Future<int>
+    + {async} get: Future<T>
+    + {async} update: Future<int>
+    + {async} delete: Furute<int>
+}
+
+abstract class UserHistoryDBModel {
+    + {readonly} id: int
+
+    + toMap(): Map<String, dynamic>
+}
+
+class UserHistModel extends UserHistoryDBModel {
+    + {final} id: int
+    + {final} muscleGroup: String
+    + {final} excerciseList: String
+    + {final} date: String
+    + {final} isDone: bool
+
+    + UserHistModel(id, date, excerciseList, muscleGroup, isDone)
+    + {factory} fromMap(map: Map<String, dynamic>)
+    + toMap(): Map<String, dynamic>
+    + {static} toModel(workout: WorkoutHistory): UserHistModel
+}
+
+UserHistDb ..> UserHistoryDBModel
+
+class HistoryRepo implements IHistoryRepo {
+    - {final} _db: UserHistDB
+
+    + HistoryRepo(db)
+    + {async} saveHistory(workout: WorkoutHistory): Future<void>
+}
+
+@enduml
