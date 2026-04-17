@@ -40,6 +40,7 @@ class HistoryRepo implements IHistoryRepo {
 
     + HistoryRepo(db)
     + {async} saveHistory(workout: WorkoutHistory): Future<void>
+    + {async} getHistory(id: int): Future<WorkoutHistory?>
 }
 
 @enduml

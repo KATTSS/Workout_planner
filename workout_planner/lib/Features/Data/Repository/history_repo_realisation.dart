@@ -13,4 +13,17 @@ class HistoryRepo implements IHistoryRepo {
     final model = UserHistModel.toModel(workout);
     await _db.insert(model);
   }
+
+  @override
+  Future<WorkoutHistory?> getHistory(int id) async {
+    final model = await _db.get<UserHistModel>(id);
+    if (model == null) return null;
+    return WorkoutHistory(
+      id: model.id,
+      date: model.date,
+      muscleGroup: model.muscleGroup,
+      excerciseList: model.excerciseList,
+      isDone: model.isDone,
+    );
+  }
 }
