@@ -2,9 +2,10 @@
 
 class UserHistDb {
     - {static, late} _db: Database
-    - {static} _isInitializes: bool
+    - {static} _isInitialized: bool
     + {statuc, final} instance: UserHistDb
 
+    - UserHistDb._()
     - {async} _createDB(db:Database, version: int): Future<void>
     - _dbName(type: Type): String
     + {async} init(): Future<void>
@@ -14,13 +15,34 @@ class UserHistDb {
     + {async} delete: Furute<int>
 }
 
-abstract class UserHistoryDBModel {
-    + {readonly} id: int
+class ExcerciseDb {
+    - {static} _instance: ExcerciseDb? 
+    - {static} _db: Database? 
+    - {final} _assetPath: String 
+    - {static} _isInitializing: bool 
+
+    + {static, get} instance: ExcerciseDb
+    + {async, get} database: Future<Database>
+
+    - ExcerciseDb._(assetPath: required String)
+    - {async} _initDatabase(): Future<Database> 
+    - {async} _copyDatabaseFromAssets(targetPath: String): Future<void>
+    + {async} query(table, where, whereArgs, orderBy, limit): Future<List<Map<String, dynamic>>>
+    + {async} rawQuery(sql: String, arguments: List<dynamic>?): Future<Map<String, dynamic>?>
+    + dispose()
+
+}
+
+UserHistDb ..> UserHistModel
+ExcerciseDb ..> ExcerciseModel 
+
+abstract class BaseDBModel {
+    + {get} id: int
 
     + toMap(): Map<String, dynamic>
 }
 
-class UserHistModel extends UserHistoryDBModel {
+class UserHistModel implements BaseDBModel {
     + {final} id: int
     + {final} muscleGroup: String
     + {final} excerciseList: String
@@ -28,19 +50,42 @@ class UserHistModel extends UserHistoryDBModel {
     + {final} isDone: bool
 
     + UserHistModel(id, date, excerciseList, muscleGroup, isDone)
-    + {factory} fromMap(map: Map<String, dynamic>)
-    + toMap(): Map<String, dynamic>
+    + {factory} fromMap(map: Map<String, dynamic>) : UserHistModel
     + {static} toModel(workout: WorkoutHistory): UserHistModel
+    + toMap(): Map<String, dynamic>
 }
 
-UserHistDb ..> UserHistoryDBModel
+class ExcerciseModel implements BaseDBModel {
+    + {final} id: int
+    + {final} name: String
+    + {final} level: int 
+    + {final} category: String 
+    + {final} equipment: String 
+    + {final} description: String 
+    + {final} primaryMusclesList: String 
+    + {final} secondaryMusclesList: String? 
+
+    + ExcerciseModel(id, name, level, category, equipment, description, primaryMusclesList, secondaryMusclesList)
+    + {factory} fromMap(map: Map<String, dynamic>): ExcerciseModel
+    + toMap(): Map<String, dynamic>
+}
+
 
 class HistoryRepo implements IHistoryRepo {
-    - {final} _db: UserHistDB
+    - {final} _db: UserHistDb
 
     + HistoryRepo(db)
     + {async} saveHistory(workout: WorkoutHistory): Future<void>
     + {async} getHistory(id: int): Future<WorkoutHistory?>
 }
 
+class ExcerciseRepo implements IExcerciseRepo {
+    + {final} db: ExcerciseDb 
+
+    + ExcerciseRepo(db)
+    + {async} getExcercise(id: int): Future<Excercise?>
+}
+
+HistoryRepo *-- UserHistDb
+ExcerciseRepo *-- ExcerciseDb
 @enduml

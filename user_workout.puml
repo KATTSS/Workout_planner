@@ -16,8 +16,12 @@ class WorkoutHistory {
 }
 
 abstract class IHistoryRepo {
-    + saveHistory(workout: WOrkoutHistory): Future<void>
+    + saveHistory(workout: WorkoutHistory): Future<void>
     + getHistory(id: int): Future<WorkoutHistory?>
+}
+
+abstract class IExcerciseRepo {
+    + getExcercise(id: int): Future<Excercise?>
 }
 
 IHistoryRepo ..> WorkoutHistory

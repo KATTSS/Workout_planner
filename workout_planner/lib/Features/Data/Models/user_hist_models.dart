@@ -1,11 +1,7 @@
+import 'package:workout_planner/Features/Data/Models/base_db_model.dart';
 import 'package:workout_planner/Features/Domain/Entities/workout_history.dart';
 
-abstract class UserHistoryDBModel {
-  int get id;
-  Map<String, dynamic> toMap();
-}
-
-class UserHistModel implements UserHistoryDBModel {
+class UserHistModel implements BaseDBModel {
   @override
   final int id;
   final String muscleGroup;

@@ -4,6 +4,7 @@ import 'package:sqflite/sqflite.dart';
 import 'dart:async';
 import 'package:workout_planner/Features/Data/Models/user_hist_models.dart';
 import 'package:workout_planner/Features/Data/Repository/user_hist_factory.dart';
+import 'package:workout_planner/Features/Data/Models/base_db_model.dart';
 
 class UserHistDb {
   UserHistDb._();
@@ -37,29 +38,39 @@ class UserHistDb {
     throw Exception('Unsupported DB model type: $type');
   }
 
-  Future<int> insert<T extends UserHistoryDBModel>(T model) async =>
-      await _db.insert(
-        _dbName(T),
-        model.toMap(),
-        conflictAlgorithm: ConflictAlgorithm.replace,
-      );
+  Future<int> insert<T extends BaseDBModel>(T model) async => await _db.insert(
+    _dbName(T),
+    model.toMap(),
+    conflictAlgorithm: ConflictAlgorithm.replace,
+  );
 
-  Future<T?> get<T extends UserHistoryDBModel>(dynamic id) async {
+  Future<T?> get<T extends BaseDBModel>(
+    dynamic id, {
+    String idColumn = 'workout_id',
+  }) async {
     final res = await _db.query(
       _dbName(T),
-      where: 'workout_id = ?',
+      where: '$idColumn = ?',
       whereArgs: [id],
     );
     return res.isNotEmpty ? dbFactories[T]!(res.first) as T : null;
   }
+  // Future<T?> get<T extends BaseDBModel>(dynamic id) async {
+  //   final res = await _db.query(
+  //     _dbName(T),
+  //     where: 'workout_id = ?',
+  //     whereArgs: [id],
+  //   );
+  //   return res.isNotEmpty ? dbFactories[T]!(res.first) as T : null;
+  // }
 
-  Future<int> update<T extends UserHistoryDBModel>(T model) async => _db.update(
+  Future<int> update<T extends BaseDBModel>(T model) async => _db.update(
     _dbName(T),
     model.toMap(),
     where: 'workout_id = ?',
     whereArgs: [model.id],
   );
 
-  Future<int> delete<T extends UserHistoryDBModel>(dynamic id) async =>
+  Future<int> delete<T extends BaseDBModel>(dynamic id) async =>
       _db.delete(_dbName(T), where: 'workout_id = ?', whereArgs: [id]);
 }
