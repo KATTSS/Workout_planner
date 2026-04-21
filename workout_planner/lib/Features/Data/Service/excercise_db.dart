@@ -111,7 +111,7 @@ class ExcerciseDb {
 
 //       final exists = await databaseExists(path);
 //       if (!exists) {
-//       // Копируем из assets
+//
 //       final data = await rootBundle.load(_assetPath);
 //       final bytes = data.buffer.asUint8List();
 //       await File(path).writeAsBytes(bytes);

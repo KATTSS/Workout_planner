@@ -47,25 +47,6 @@ class Excercise {
       secondaryMuscle ?? this.secondaryMuscle,
     );
   }
-  // Excercise(
-  //   this.id,
-  //   this.name,
-  //   this.level, {
-  //   this.category = "",
-
-  //   this.description = "",
-  //   this.muscle = "",
-  //   this.secondaryMuscle = "",
-  // });
-
-  // Excercise.basic(this.id, this.name, this.level)
-  //   : description = "",
-  //     muscle = "",
-  //     secondaryMuscle = "";
-
-  // Excercise.descripted(this.id, this.name, this.level, this.description)
-  //   : muscle = "",
-  //     secondaryMuscle = "";
 }
 
 mixin Weight {

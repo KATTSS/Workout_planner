@@ -99,26 +99,19 @@ class UserHistDb {
     return res.map((map) => dbFactories[T]!(map) as T).toList();
   }
 
-Future<List<T>> getAll<T extends BaseDBModel>({
+  Future<List<T>> getAll<T extends BaseDBModel>({
     int? limit,
     bool orderDesc = true,
   }) async {
     final res = await _db.query(
       _dbName(T),
-      orderBy: orderDesc ? 'date DESC, workout_id DESC' : 'date ASC, workout_id ASC',
+      orderBy: orderDesc
+          ? 'date DESC, workout_id DESC'
+          : 'date ASC, workout_id ASC',
       limit: limit,
     );
     return res.map((map) => dbFactories[T]!(map) as T).toList();
   }
-
-  // Future<T?> get<T extends BaseDBModel>(dynamic id) async {
-  //   final res = await _db.query(
-  //     _dbName(T),
-  //     where: 'workout_id = ?',
-  //     whereArgs: [id],
-  //   );
-  //   return res.isNotEmpty ? dbFactories[T]!(res.first) as T : null;
-  // }
 
   Future<int> update<T extends BaseDBModel>(T model) async => _db.update(
     _dbName(T),
