@@ -17,7 +17,7 @@ class ExcerciseRepo implements IExcerciseRepo {
 
     if (maps.isNotEmpty) {
       final model = ExcerciseModel.fromMap(maps.first);
-      return Excercise(model.id, model.level);
+      return Excercise(model.id, model.name, model.level);
     }
     return null;
   }

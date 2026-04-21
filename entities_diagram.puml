@@ -1,55 +1,61 @@
 @startuml BaseEntities
 
-class Excercise {
-    + Id 
-    + Level
-    + Description 
-    + Muscle 
-    + SecondaryMuscle 
+class Exercise {
+    + id: int
+    + name: String 
+    + level: int 
+    + description: String  
+    + muscle: String 
+    + secondaryMuscle: String 
+    __
+    + Exercise(id, name, level, description?, muscle?, secondaryMuscle?)
+    + Exercise.basic(id, name, level) 
+    + Exercise.descripted(id, name, level, description) 
+    + Exercise.full(id, name, level, description, muscle, secondaryMuscle) 
+    + toString(): String 
 }
 
-interface Equipmentable{
-    + Equipment
+class DurationableExercise extends Exercise {
+    + duration: double 
+    __
+    + DurationableExercise(id, name, level, duration)
 }
 
-class DurationableExcercise{
-
+class RepeatableExercise extends Exercise {
+    + reps: int 
+    + rounds: int 
+    __
+    + RepeatableExercise(id, name, level, reps, rounds) 
 }
 
-class RepeatableExcercise {
-
+interface Equipmentable <<mixin>> {
+    + equipment: Equipment 
 }
 
-class EquipmentableDurationableExcercise {
-
+class RepeatableEquipmentableExercise extends RepeatableExercise implements Equipmentable {
+    __
+    + RepeatableEquipmentableExercise(id, name, level, reps, rounds, equipment)
 }
 
-class EquipmentableRepeatableExcercise {
-
+class DurationableEquipmentableExercise extends DurationableExercise implements Equipmentable {
+    __
+    + DurationableEquipmentableExercise(id, name, level, duration, equipment)
 }
 
 class Weight {
     - Mass 
+    __
     + GetMass()
 }
 
-class Machine{
+class Machine {
 }
 
 class Equipment {
     + Name
 }
 
-DurationableExcercise <|-- Excercise
-RepeatableExcercise <|-- Excercise
+Equipment <|-- Machine
+Equipment <|-- Weight
 
-
-EquipmentableDurationableExcercise <|-- DurationableExcercise
-EquipmentableRepeatableExcercise <|-- RepeatableExcercise
-
-EquipmentableDurationableExcercise <|.. Equipmentable
-EquipmentableRepeatableExcercise <|.. Equipmentable
-
-Machine <|-- Equipment
-Weight <|-- Equipment
-@enduml 
+@enduml
