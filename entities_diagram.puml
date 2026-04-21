@@ -1,59 +1,68 @@
 @startuml BaseEntities
 
 class Excercise {
-    + Id 
-    + Level
-    + Description 
-    + Muscle 
-    + SecondaryMuscle 
+    + id: int
+    + name: String 
+    + level: int 
+    + category: String
+    + equipment: String
+    + description: String  
+    + muscle: String 
+    + secondaryMuscle: String 
+    __
+    + Exercise(id, name, level, category, equipment, description, muscle, secondaryMuscle) 
+    + toString(): String 
+    + copyWith(id?, name?, level?, category?, equipment?, description?, muscle?, secondaryMuscle?): Excercise
 }
 
-interface IEquipmentable{
-    + Equipment
+interface Weight <<mixin>> {
+    + mass: double
 }
 
-class DurationableExcercise{
-
+class WeightedExcercise extends Excercise implements Weight {
+    + WeightedExcercise(id, name, level, category, equipment, description, muscle, secondaryMuscle, mass)
 }
+' class DurationableExercise extends Exercise {
+'     + duration: double 
+'     __
+'     + DurationableExercise(id, name, level, duration)
+' }
 
-class RepeatableExcercise {
+' class RepeatableExercise extends Exercise {
+'     + reps: int 
+'     + rounds: int 
+'     __
+'     + RepeatableExercise(id, name, level, reps, rounds) 
+' }
 
-}
+' interface Equipmentable <<mixin>> {
+'     + equipment: Equipment 
+' }
 
-class EquipmentableDurationableExcercise {
+' class RepeatableEquipmentableExercise extends RepeatableExercise implements Equipmentable {
+'     __
+'     + RepeatableEquipmentableExercise(id, name, level, reps, rounds, equipment)
+' }
 
-}
+' class DurationableEquipmentableExercise extends DurationableExercise implements Equipmentable {
+'     __
+'     + DurationableEquipmentableExercise(id, name, level, duration, equipment)
+' }
 
-class EquipmentableRepeatableExcercise {
+' class Weight {
+'     - Mass 
+'     __
+'     + GetMass()
+' }
 
-}
+' class Machine {
+' }
 
-class Weight {
-    - Mass 
-    + GetMass()
-}
+' class Equipment {
+'     + Name
+' }
 
-class Set{
-    + SetsCount
-}
+' Equipment <|-- Machine
+' Equipment <|-- Weight
 
-class Machine{
-}
-
-class Equipment {
-    + Name
-}
-
-DurationableExcercise <|-- Excercise
-RepeatableExcercise <|-- Excercise
-
-
-EquipmentableDurationableExcercise <|-- DurationableExcercise
-EquipmentableRepeatableExcercise <|-- RepeatableExcercise
-
-EquipmentableDurationableExcercise <|.. IEquipmentable
-EquipmentableRepeatableExcercise <|.. IEquipmentable
-
-Machine <|-- Equipment
-Weight <|-- Equipment
-@enduml 
+@enduml

@@ -1,0 +1,42 @@
+@startuml UserWorkout
+
+class User {
+    - _sex : int 
+    - _weight : double 
+    - _height : double 
+    - _name : String 
+}
+
+class WorkoutHistory {
+    id : int
+    date : DateTime 
+    muscleGroup : String
+    excerciseList : String
+    isDone : bool 
+}
+
+abstract class IHistoryRepo {
+    + saveHistory(workout: WorkoutHistory): Future<void>
+    + getHistory(id: int): Future<WorkoutHistory?>
+    + getByDate(date:String, {limit: int?, orderDesc: bool}): Fututre<List<WorkoutHistory>>
+    + getBeforeDate(date, {limit}): Future<List<WorkoutHistory>>
+    + getAfterDate(date, {limit}): Future<List<WorkoutHistory>>
+    + getAll({limit, newestFirst}): Future<List<WorkoutHistory>>
+    + updateHistory(workout: WorkoutHistory): Future<void>
+    + deleteHistory(id: int): Future<void>
+    
+}
+
+abstract class IExcerciseRepo {
+    + getById(id: int): Future<Excercise?>
+    + getByLevel(level: int): Future<List<Excercise>>
+    + getByCategory(category: String): Future<List<Excercise>>
+    + searchByName(query: String): Future<List<Excercise>>
+    + getAll(): Future<List<Excercise>>
+    + getByMuscleGroup(muscleGroup: String): Future<List<Excercise>>
+}
+
+IHistoryRepo ..> WorkoutHistory
+IExcerciseRepo ..> Excercise
+
+@enduml

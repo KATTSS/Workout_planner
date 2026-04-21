@@ -1,0 +1,109 @@
+@startuml User_DB
+
+class UserHistDb {
+    - {static, late} _db: Database
+    - {static} _isInitialized: bool
+    + {statuc, final} instance: UserHistDb
+
+    - UserHistDb._()
+    - {async} _createDB(db:Database, version: int): Future<void>
+    - _dbName(type: Type): String
+    + {async} init(): Future<void>
+    + {async} insert : Future<int>
+    + {async} get: Future<T>
+    + {async} getByDate(date:String, {limit: int?, orderDesc: bool}): Fututre<List<T>>
+    + {async} getBeforeDate(date, {limit}): Future<List<T>>
+    + {async} getAfterDate(date, {limit}): Future<List<T>>
+    + {async} getAll({limit, orderDesc}): Future<List<T>>
+    + {async} update: Future<int>
+    + {async} delete: Furute<int>
+}
+
+class ExcerciseDb {
+    - {static} _instance: ExcerciseDb? 
+    - {static} _db: Database? 
+    - {final} _assetPath: String 
+    - {static} _isInitializing: bool 
+
+    + {static, get} instance: ExcerciseDb
+    + {async, get} database: Future<Database>
+
+    - ExcerciseDb._(assetPath: required String)
+    - {async} _initDatabase(): Future<Database> 
+    - {async} _copyDatabaseFromAssets(targetPath: String): Future<void>
+    + {async} query(table, where, whereArgs, orderBy, limit): Future<List<Map<String, dynamic>>>
+    + {async} rawQuery(sql: String, arguments: List<dynamic>?): Future<Map<String, dynamic>?>
+    + dispose()
+
+}
+
+UserHistDb ..> UserHistModel
+ExcerciseDb ..> ExcerciseModel 
+ExcerciseDb ..> Excercise
+
+abstract class BaseDBModel {
+    + {get} id: int
+
+    + toMap(): Map<String, dynamic>
+}
+
+class UserHistModel implements BaseDBModel {
+    + {final} id: int
+    + {final} muscleGroup: String
+    + {final} excerciseList: String
+    + {final} date: String
+    + {final} isDone: bool
+
+    + UserHistModel(id, date, excerciseList, muscleGroup, isDone)
+    + {factory} fromMap(map: Map<String, dynamic>) : UserHistModel
+    + {static} toModel(workout: WorkoutHistory): UserHistModel
+    + toMap(): Map<String, dynamic>
+    + toDomain(): WorkoutHistory
+}
+
+class ExcerciseModel implements BaseDBModel {
+    + {final} id: int
+    + {final} name: String
+    + {final} level: int 
+    + {final} category: String 
+    + {final} equipment: String 
+    + {final} description: String 
+    + {final} primaryMusclesList: String 
+    + {final} secondaryMusclesList: String? 
+
+    + ExcerciseModel(id, name, level, category, equipment, description, primaryMusclesList, secondaryMusclesList)
+    + {factory} fromMap(map: Map<String, dynamic>): ExcerciseModel
+    + toMap(): Map<String, dynamic>
+    + toDomain(): Excercise
+}
+
+
+class HistoryRepo implements IHistoryRepo {
+    - {final} _db: UserHistDb
+
+    + HistoryRepo(db)
+    + {async} saveHistory(workout: WorkoutHistory): Future<void>
+    + {async} getHistory(id: int): Future<WorkoutHistory?>
+    + {async} getByDate(date:String, {limit: int?, orderDesc: bool}): Fututre<List<WorkoutHistory>>
+    + {async} getBeforeDate(date, {limit}): Future<List<WorkoutHistory>>
+    + {async} getAfterDate(date, {limit}): Future<List<WorkoutHistory>>
+    + {async} getAll({limit, newestFirst}): Future<List<WorkoutHistory>>
+    + {async} updateHistory(workout: WorkoutHistory): Future<void>
+    + {async} deleteHistory(id: int): Future<void>
+}
+
+class ExcerciseRepo implements IExcerciseRepo {
+    + {final} _db: ExcerciseDb 
+
+    + ExcerciseRepo(db)
+    + {async} getById(id: int): Future<Excercise?>
+    + {async>} getByLevel(level: int): Future<List<Excercise>>
+    + {async>} getByCategory(category: String): Future<List<Excercise>>
+    + {async>} searchByName(query: String): Future<List<Excercise>>
+    + {async>} getAll(): Future<List<Excercise>>
+    + {async>} getByMuscleGroup(muscleGroup: String): Future<List<Excercise>>
+}
+
+HistoryRepo *-- UserHistDb
+ExcerciseRepo *-- ExcerciseDb
+@enduml
