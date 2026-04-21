@@ -82,7 +82,7 @@ class _MyHomePageState extends State<MyHomePage> {
       final testId = DateTime.now().millisecondsSinceEpoch % 100000;
       final testWorkout = WorkoutHistory(
         id: testId,
-        date: DateTime.now().toString(),
+        date: DateTime.now(),
         muscleGroup: 'Test Group',
         excerciseList: 'Test Push-up',
         isDone: true,

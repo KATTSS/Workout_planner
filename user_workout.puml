@@ -9,7 +9,7 @@ class User {
 
 class WorkoutHistory {
     id : int
-    date : String 
+    date : DateTime 
     muscleGroup : String
     excerciseList : String
     isDone : bool 
@@ -18,6 +18,13 @@ class WorkoutHistory {
 abstract class IHistoryRepo {
     + saveHistory(workout: WorkoutHistory): Future<void>
     + getHistory(id: int): Future<WorkoutHistory?>
+    + getByDate(date:String, {limit: int?, orderDesc: bool}): Fututre<List<WorkoutHistory>>
+    + getBeforeDate(date, {limit}): Future<List<WorkoutHistory>>
+    + getAfterDate(date, {limit}): Future<List<WorkoutHistory>>
+    + getAll({limit, newestFirst}): Future<List<WorkoutHistory>>
+    + updateHistory(workout: WorkoutHistory): Future<void>
+    + deleteHistory(id: int): Future<void>
+    
 }
 
 abstract class IExcerciseRepo {

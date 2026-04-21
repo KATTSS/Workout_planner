@@ -11,6 +11,10 @@ class UserHistDb {
     + {async} init(): Future<void>
     + {async} insert : Future<int>
     + {async} get: Future<T>
+    + {async} getByDate(date:String, {limit: int?, orderDesc: bool}): Fututre<List<T>>
+    + {async} getBeforeDate(date, {limit}): Future<List<T>>
+    + {async} getAfterDate(date, {limit}): Future<List<T>>
+    + {async} getAll({limit, orderDesc}): Future<List<T>>
     + {async} update: Future<int>
     + {async} delete: Furute<int>
 }
@@ -54,6 +58,7 @@ class UserHistModel implements BaseDBModel {
     + {factory} fromMap(map: Map<String, dynamic>) : UserHistModel
     + {static} toModel(workout: WorkoutHistory): UserHistModel
     + toMap(): Map<String, dynamic>
+    + toDomain(): WorkoutHistory
 }
 
 class ExcerciseModel implements BaseDBModel {
@@ -79,6 +84,12 @@ class HistoryRepo implements IHistoryRepo {
     + HistoryRepo(db)
     + {async} saveHistory(workout: WorkoutHistory): Future<void>
     + {async} getHistory(id: int): Future<WorkoutHistory?>
+    + {async} getByDate(date:String, {limit: int?, orderDesc: bool}): Fututre<List<WorkoutHistory>>
+    + {async} getBeforeDate(date, {limit}): Future<List<WorkoutHistory>>
+    + {async} getAfterDate(date, {limit}): Future<List<WorkoutHistory>>
+    + {async} getAll({limit, newestFirst}): Future<List<WorkoutHistory>>
+    + {async} updateHistory(workout: WorkoutHistory): Future<void>
+    + {async} deleteHistory(id: int): Future<void>
 }
 
 class ExcerciseRepo implements IExcerciseRepo {

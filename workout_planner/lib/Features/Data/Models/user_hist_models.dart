@@ -34,7 +34,7 @@ class UserHistModel implements BaseDBModel {
   static UserHistModel toModel(WorkoutHistory workout) {
     return UserHistModel(
       id: workout.id,
-      date: workout.date,
+      date: workout.date.toIso8601String().split('T')[0],
       excerciseList: workout.excerciseList,
       muscleGroup: workout.muscleGroup,
       isDone: workout.isDone,
@@ -49,4 +49,14 @@ class UserHistModel implements BaseDBModel {
         date: map['date'] as String,
         isDone: (map['isDone'] as int) == 1,
       );
+
+  WorkoutHistory toDomain() {
+    return WorkoutHistory(
+      id: id,
+      date: DateTime.parse(date),
+      muscleGroup: muscleGroup,
+      excerciseList: excerciseList,
+      isDone: isDone,
+    );
+  }
 }

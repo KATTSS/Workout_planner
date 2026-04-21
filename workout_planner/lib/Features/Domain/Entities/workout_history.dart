@@ -1,6 +1,6 @@
 class WorkoutHistory {
   final int id;
-  final String date;
+  final DateTime date;
   final String muscleGroup;
   final String excerciseList;
   final bool isDone;

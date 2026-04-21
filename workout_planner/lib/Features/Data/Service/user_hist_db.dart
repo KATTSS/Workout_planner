@@ -55,6 +55,62 @@ class UserHistDb {
     );
     return res.isNotEmpty ? dbFactories[T]!(res.first) as T : null;
   }
+
+  Future<List<T>> getByDate<T extends BaseDBModel>(
+    String date, {
+    int? limit,
+    bool orderDesc = false,
+  }) async {
+    final res = await _db.query(
+      _dbName(T),
+      where: 'date = ?',
+      whereArgs: [date],
+      orderBy: orderDesc ? 'workout_id DESC' : 'workout_id ASC',
+      limit: limit,
+    );
+    return res.map((map) => dbFactories[T]!(map) as T).toList();
+  }
+
+  Future<List<T>> getBeforeDate<T extends BaseDBModel>(
+    String date, {
+    int? limit,
+  }) async {
+    final res = await _db.query(
+      _dbName(T),
+      where: 'date < ?',
+      whereArgs: [date],
+      orderBy: 'date DESC, workout_id DESC',
+      limit: limit,
+    );
+    return res.map((map) => dbFactories[T]!(map) as T).toList();
+  }
+
+  Future<List<T>> getAfterDate<T extends BaseDBModel>(
+    String date, {
+    int? limit,
+  }) async {
+    final res = await _db.query(
+      _dbName(T),
+      where: 'date > ?',
+      whereArgs: [date],
+      orderBy: 'date ASC, workout_id ASC',
+      limit: limit,
+    );
+    return res.map((map) => dbFactories[T]!(map) as T).toList();
+  }
+
+Future<List<T>> getAll<T extends BaseDBModel>({
+    int? limit,
+    bool orderDesc = true,
+  }) async {
+    final res = await _db.query(
+      _dbName(T),
+      orderBy: orderDesc ? 'date DESC, workout_id DESC' : 'date ASC, workout_id ASC',
+      limit: limit,
+    );
+    return res.map((map) => dbFactories[T]!(map) as T).toList();
+  }
+
   // Future<T?> get<T extends BaseDBModel>(dynamic id) async {
   //   final res = await _db.query(
   //     _dbName(T),
