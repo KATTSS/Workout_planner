@@ -35,6 +35,7 @@ class ExcerciseDb {
 
 UserHistDb ..> UserHistModel
 ExcerciseDb ..> ExcerciseModel 
+ExcerciseDb ..> Excercise
 
 abstract class BaseDBModel {
     + {get} id: int
@@ -68,6 +69,7 @@ class ExcerciseModel implements BaseDBModel {
     + ExcerciseModel(id, name, level, category, equipment, description, primaryMusclesList, secondaryMusclesList)
     + {factory} fromMap(map: Map<String, dynamic>): ExcerciseModel
     + toMap(): Map<String, dynamic>
+    + toDomain(): Excercise
 }
 
 
@@ -80,10 +82,15 @@ class HistoryRepo implements IHistoryRepo {
 }
 
 class ExcerciseRepo implements IExcerciseRepo {
-    + {final} db: ExcerciseDb 
+    + {final} _db: ExcerciseDb 
 
     + ExcerciseRepo(db)
-    + {async} getExcercise(id: int): Future<Excercise?>
+    + {async} getById(id: int): Future<Excercise?>
+    + {async>} getByLevel(level: int): Future<List<Excercise>>
+    + {async>} getByCategory(category: String): Future<List<Excercise>>
+    + {async>} searchByName(query: String): Future<List<Excercise>>
+    + {async>} getAll(): Future<List<Excercise>>
+    + {async>} getByMuscleGroup(muscleGroup: String): Future<List<Excercise>>
 }
 
 HistoryRepo *-- UserHistDb

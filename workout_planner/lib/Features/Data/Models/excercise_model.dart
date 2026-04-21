@@ -1,4 +1,5 @@
 import 'package:workout_planner/Features/Data/Models/base_db_model.dart';
+import 'package:workout_planner/Features/Domain/Entities/excercise.dart';
 
 class ExcerciseModel implements BaseDBModel {
   @override
@@ -49,5 +50,18 @@ class ExcerciseModel implements BaseDBModel {
       'primary_muscles': primaryMusclesList,
       'secondary_muscles': secondaryMusclesList ?? '',
     };
+  }
+
+  Excercise toDomain() {
+    return Excercise(
+      id,
+      name,
+      level,
+      category,
+      equipment,
+      description,
+      primaryMusclesList,
+      secondaryMusclesList ?? '',
+    );
   }
 }

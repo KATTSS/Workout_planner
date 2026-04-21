@@ -1,61 +1,68 @@
 @startuml BaseEntities
 
-class Exercise {
+class Excercise {
     + id: int
     + name: String 
     + level: int 
+    + category: String
+    + equipment: String
     + description: String  
     + muscle: String 
     + secondaryMuscle: String 
     __
-    + Exercise(id, name, level, description?, muscle?, secondaryMuscle?)
-    + Exercise.basic(id, name, level) 
-    + Exercise.descripted(id, name, level, description) 
-    + Exercise.full(id, name, level, description, muscle, secondaryMuscle) 
+    + Exercise(id, name, level, category, equipment, description, muscle, secondaryMuscle) 
     + toString(): String 
+    + copyWith(id?, name?, level?, category?, equipment?, description?, muscle?, secondaryMuscle?): Excercise
 }
 
-class DurationableExercise extends Exercise {
-    + duration: double 
-    __
-    + DurationableExercise(id, name, level, duration)
+interface Weight <<mixin>> {
+    + mass: double
 }
 
-class RepeatableExercise extends Exercise {
-    + reps: int 
-    + rounds: int 
-    __
-    + RepeatableExercise(id, name, level, reps, rounds) 
+class WeightedExcercise extends Excercise implements Weight {
+    + WeightedExcercise(id, name, level, category, equipment, description, muscle, secondaryMuscle, mass)
 }
+' class DurationableExercise extends Exercise {
+'     + duration: double 
+'     __
+'     + DurationableExercise(id, name, level, duration)
+' }
 
-interface Equipmentable <<mixin>> {
-    + equipment: Equipment 
-}
+' class RepeatableExercise extends Exercise {
+'     + reps: int 
+'     + rounds: int 
+'     __
+'     + RepeatableExercise(id, name, level, reps, rounds) 
+' }
 
-class RepeatableEquipmentableExercise extends RepeatableExercise implements Equipmentable {
-    __
-    + RepeatableEquipmentableExercise(id, name, level, reps, rounds, equipment)
-}
+' interface Equipmentable <<mixin>> {
+'     + equipment: Equipment 
+' }
 
-class DurationableEquipmentableExercise extends DurationableExercise implements Equipmentable {
-    __
-    + DurationableEquipmentableExercise(id, name, level, duration, equipment)
-}
+' class RepeatableEquipmentableExercise extends RepeatableExercise implements Equipmentable {
+'     __
+'     + RepeatableEquipmentableExercise(id, name, level, reps, rounds, equipment)
+' }
 
-class Weight {
-    - Mass 
-    __
-    + GetMass()
-}
+' class DurationableEquipmentableExercise extends DurationableExercise implements Equipmentable {
+'     __
+'     + DurationableEquipmentableExercise(id, name, level, duration, equipment)
+' }
 
-class Machine {
-}
+' class Weight {
+'     - Mass 
+'     __
+'     + GetMass()
+' }
 
-class Equipment {
-    + Name
-}
+' class Machine {
+' }
 
-Equipment <|-- Machine
-Equipment <|-- Weight
+' class Equipment {
+'     + Name
+' }
+
+' Equipment <|-- Machine
+' Equipment <|-- Weight
 
 @enduml

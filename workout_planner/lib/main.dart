@@ -67,10 +67,12 @@ class _MyHomePageState extends State<MyHomePage> {
     try {
       // --- ПРОВЕРКА 1: База упражнений (ReadOnly) ---
       // Пытаемся достать упражнение с индексом 1
-      final exercise = await _excerciseRepo.getExcercise(1);
+      final exercise = await _excerciseRepo.searchByName(
+        'Advanced Kettlebell Windmill',
+      );
       if (exercise != null) {
         _exerciseDbStatus =
-            '✅ Success! Found Exercise ID: ${exercise.id}, Level: ${exercise.level}';
+            '✅ Success! Found Exercise ID: ${exercise.toString()}';
       } else {
         _exerciseDbStatus =
             '⚠️ Connected, but Exercise ID 1 not found (DB might be empty).';

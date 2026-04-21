@@ -21,9 +21,15 @@ abstract class IHistoryRepo {
 }
 
 abstract class IExcerciseRepo {
-    + getExcercise(id: int): Future<Excercise?>
+    + getById(id: int): Future<Excercise?>
+    + getByLevel(level: int): Future<List<Excercise>>
+    + getByCategory(category: String): Future<List<Excercise>>
+    + searchByName(query: String): Future<List<Excercise>>
+    + getAll(): Future<List<Excercise>>
+    + getByMuscleGroup(muscleGroup: String): Future<List<Excercise>>
 }
 
 IHistoryRepo ..> WorkoutHistory
+IExcerciseRepo ..> Excercise
 
 @enduml

@@ -4,21 +4,104 @@ import 'package:workout_planner/Features/Domain/Entities/excercise.dart';
 import 'package:workout_planner/Features/Domain/Repository/excercise_repo.dart';
 
 class ExcerciseRepo implements IExcerciseRepo {
-  final ExcerciseDb db;
-  ExcerciseRepo(this.db);
+  final ExcerciseDb _db;
+  ExcerciseRepo(this._db);
 
   @override
-  Future<Excercise?> getExcercise(int id) async {
-    final List<Map<String, dynamic>> maps = await db.query(
-      'excercise_table',
-      where: 'id = ?',
-      whereArgs: [id],
-    );
+  Future<Excercise?> getById(int id) async {
+    try {
+      final maps = await _db.query(
+        'excercise_table',
+        where: 'id = ?',
+        whereArgs: [id],
+      );
 
-    if (maps.isNotEmpty) {
+      if (maps.isEmpty) return null;
+
       final model = ExcerciseModel.fromMap(maps.first);
-      return Excercise(model.id, model.name, model.level);
+      return model.toDomain();
+    } catch (e) {
+      print('Error getting exercise by id: $e');
+      return null;
     }
-    return null;
+  }
+
+  @override
+  Future<List<Excercise>> getByLevel(int level) async {
+    try {
+      final maps = await _db.query(
+        'excercise_table',
+        where: 'level = ?',
+        whereArgs: [level],
+      );
+
+      return _mapToEntityList(maps);
+    } catch (e) {
+      print('Error getting exercises by level: $e');
+      return [];
+    }
+  }
+
+  @override
+  Future<List<Excercise>> getByCategory(String category) async {
+    try {
+      final maps = await _db.query(
+        'excercise_table',
+        where: 'category LIKE ?',
+        whereArgs: ['%$category%'],
+      );
+
+      return _mapToEntityList(maps);
+    } catch (e) {
+      print('Error getting exercises by category: $e');
+      return [];
+    }
+  }
+
+  @override
+  Future<List<Excercise>> searchByName(String query) async {
+    try {
+      final maps = await _db.query(
+        'excercise_table',
+        where: 'name LIKE ?',
+        whereArgs: ['%$query%'],
+      );
+
+      return _mapToEntityList(maps);
+    } catch (e) {
+      print('Error searching exercises: $e');
+      return [];
+    }
+  }
+
+  @override
+  Future<List<Excercise>> getAll() async {
+    try {
+      final maps = await _db.query('excercise_table');
+      return _mapToEntityList(maps);
+    } catch (e) {
+      print('Error getting all exercises: $e');
+      return [];
+    }
+  }
+
+  @override
+  Future<List<Excercise>> getByMuscleGroup(String muscleGroup) async {
+    try {
+      final maps = await _db.query(
+        'excercise_table',
+        where: 'primary_muscles LIKE ? OR secondary_muscles LIKE ?',
+        whereArgs: ['%$muscleGroup%', '%$muscleGroup%'],
+      );
+
+      return _mapToEntityList(maps);
+    } catch (e) {
+      print('Error getting exercises by muscle group: $e');
+      return [];
+    }
+  }
+
+  List<Excercise> _mapToEntityList(List<Map<String, dynamic>> maps) {
+    return maps.map((map) => ExcerciseModel.fromMap(map).toDomain()).toList();
   }
 }
