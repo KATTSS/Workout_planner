@@ -1,8 +1,9 @@
 import 'package:workout_planner/Features/Data/Models/base_db_model.dart';
 import 'package:workout_planner/Features/Domain/Entities/excercise.dart';
 
-class ExcerciseModel implements BaseDBModel {
-  @override
+// class ExcerciseModel implements BaseDBModel {
+ // @override
+class ExcerciseModel {
   final int id;
   final String name;
   final int level;
@@ -38,7 +39,7 @@ class ExcerciseModel implements BaseDBModel {
         secondaryMusclesList: map['secondary_muscles'] as String? ?? '',
       );
 
-  @override
+  // @override
   Map<String, dynamic> toMap() {
     return <String, dynamic>{
       'index': id,
@@ -52,16 +53,46 @@ class ExcerciseModel implements BaseDBModel {
     };
   }
 
-  Excercise toDomain() {
-    return Excercise(
-      id,
-      name,
-      level,
-      category,
-      equipment,
-      description,
-      primaryMusclesList,
-      secondaryMusclesList ?? '',
+  Exercise toDomain() {
+    return Exercise(
+      id: id,
+      name: name,
+      level: level,
+      category: _parseCategory(category),
+      equipment: Equipment.fromString(equipment),
+      description: description,
+      muscle: primaryMusclesList,
+      secondaryMuscle: secondaryMusclesList ?? '',
     );
+  }
+
+  // Создание из доменной модели
+  factory ExcerciseModel.fromDomain(Exercise exercise) {
+    return ExcerciseModel(
+      id: exercise.id,
+      name: exercise.name,
+      level: exercise.level,
+      category: exercise.category.name,
+      equipment: exercise.equipment.name,
+      description: exercise.description,
+      primaryMusclesList: exercise.muscle,
+      secondaryMusclesList: exercise.secondaryMuscle,
+    );
+  }
+
+  static ExerciseCategory _parseCategory(String category) {
+    try {
+      return ExerciseCategory.values.firstWhere(
+        (e) => e.name.toLowerCase() == category.toLowerCase(),
+      );
+    } catch (_) {
+      // Маппинг для специальных случаев
+      switch (category.toLowerCase()) {
+        case 'olympic weightlifting':
+          return ExerciseCategory.olympicWeightlifting;
+        default:
+          return ExerciseCategory.strength;
+      }
+    }
   }
 }

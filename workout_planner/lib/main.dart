@@ -3,8 +3,12 @@ import 'package:workout_planner/Features/Data/Repository/history_repo_realisatio
 import 'package:workout_planner/Features/Data/Repository/excercise_repo_realisation.dart';
 import 'package:workout_planner/Features/Data/Service/excercise_db.dart';
 import 'package:workout_planner/Features/Data/Service/user_hist_db.dart';
+import 'package:workout_planner/Features/Domain/Entities/Performance/ex_perfomance.dart';
+import 'package:workout_planner/Features/Domain/Entities/Performance/set_data.dart';
+import 'package:workout_planner/Features/Domain/Entities/Workout/workout_builder.dart';
 import 'package:workout_planner/Features/Domain/Entities/excercise.dart';
-import 'package:workout_planner/Features/Domain/Entities/workout_history.dart';
+// import 'package:workout_planner/Features/Domain/Entities/excercise.dart';
+// import 'package:workout_planner/Features/Domain/Entities/Workout/workout.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -69,28 +73,45 @@ class _MyHomePageState extends State<MyHomePage> {
             '⚠️ Connected, but Exercise ID 1 not found (DB might be empty).';
       }
 
-      final testId = DateTime.now().millisecondsSinceEpoch % 100000;
-      final testWorkout = WorkoutHistory(
-        id: testId,
-        date: DateTime.now(),
-        muscleGroup: 'Test Group',
-        excerciseList: 'Test Push-up',
-        isDone: true,
-      );
+      // final testId = DateTime.now().millisecondsSinceEpoch % 100000;
+      // final ex = Exercise(
+      //   id: testId,
+      //   name: "test ex",
+      //   level: 2,
+      //   category: ExerciseCategory.cardio,
+      //   equipment: Equipment.bodyOnly,
+      //   description: "jump and run",
+      //   muscle: "legs",
+      //   secondaryMuscle: "arms",
+      // );
+      // final set = SetData.duration(duration: 2.5);
+      // var exx = ExercisePerformance.create(exercise: ex, sets: [set]);
+      // final testWorkout = WorkoutBuilder()
+      //     .addExercise(exx)
+      //     .setNotes("testing")
+      //     .setDate(DateTime.now())
+      //     .build();
+      // final testWorkout = Workout(
+      //   id: testId,
+      //   date: DateTime.now(),
+      //   muscleGroup: 'Test Group',
+      //   exercisesJson: 'Test Push-up',
+      //   isDone: true,
+      // );
 
-      await _historyRepo.saveHistory(testWorkout);
+      // final saved_id = await _historyRepo.saveWorkout(testWorkout);
 
-      final retrieved = await _historyRepo.getHistory(testId);
+      // final retrieved = await _historyRepo.getWorkout(saved_id);
 
-      if (retrieved != null && retrieved.muscleGroup == 'Test Group') {
-        _historyDbStatus =
-            '✅ Success! Test record saved and retrieved (ID: $testId).';
-      } else {
-        _historyDbStatus = '❌ Failed to retrieve the record after saving.';
-      }
+      // if (retrieved != null && retrieved.primaryMuscleGroup == 'legs') {
+      //   _historyDbStatus =
+      //       '✅ Success! Test record saved and retrieved (ID: $testId).';
+      // } else {
+      //   _historyDbStatus = '❌ Failed to retrieve the record after saving.';
+      // }
     } catch (e) {
       _exerciseDbStatus = '❌ Error: $e';
-      _historyDbStatus = '❌ Error: $e';
+      //  _historyDbStatus = '❌ Error: $e';
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);

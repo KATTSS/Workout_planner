@@ -6,7 +6,7 @@ class StatisticsManager {
     return "user stats";
   }
 
-  String getExcerciseStatistics(Excercise ex) {
+  String getExcerciseStatistics(Exercise ex) {
     return "ex stats";
   }
 

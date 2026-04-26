@@ -3,29 +3,29 @@ import 'package:workout_planner/Features/Domain/Entities/excercise.dart';
 abstract class Memento {}
 
 class WorkoutMemento implements Memento {
-  final List<Excercise> _excercises;
+  final List<Exercise> _excercises;
   final DateTime _workoutDate;
   final bool _isCompleted;
 
   WorkoutMemento(this._excercises, this._workoutDate, this._isCompleted);
 
-  List<Excercise> get excercises => List.unmodifiable(_excercises);
+  List<Exercise> get excercises => List.unmodifiable(_excercises);
   DateTime get workoutDate => _workoutDate;
   bool get isCompleted => _isCompleted;
 }
 
 class WorkoutManager {
-  List<Excercise> _excercises = [];
+  List<Exercise> _excercises = [];
   DateTime _workoutDate = DateTime.now();
   bool _isCompleted = false;
 
   WorkoutManager(this._excercises, this._workoutDate, this._isCompleted);
 
-  void addExcercise(Excercise excercise) {
+  void addExcercise(Exercise excercise) {
     _excercises.add(excercise);
   }
 
-  void removeExcercise(Excercise excercise) {
+  void removeExcercise(Exercise excercise) {
     _excercises.remove(excercise);
   }
 
@@ -41,7 +41,7 @@ class WorkoutManager {
     this._workoutDate = workoutDate;
   }
 
-  void changeExcercise(Excercise oldExcercise, Excercise newExcercise) {
+  void changeExcercise(Exercise oldExcercise, Exercise newExcercise) {
     int index = _excercises.indexOf(oldExcercise);
     if (index != -1) {
       _excercises[index] = newExcercise;

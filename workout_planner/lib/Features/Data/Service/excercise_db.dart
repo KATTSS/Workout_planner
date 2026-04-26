@@ -133,7 +133,7 @@ class ExcerciseDb {
 
 //   String _dbName(Type type) {
 //     if (type == UserHistModel) {
-//       return 't_UserHistoryItem';
+//       return 'UserHistoryItem';
 //     }
 //     throw Exception('Unsupported DB model type: $type');
 //   }

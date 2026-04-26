@@ -33,18 +33,19 @@ class UserHistDb {
 
   String _dbName(Type type) {
     if (type == UserHistModel) {
-      return 't_UserHistoryItem';
+      return 'UserHistoryItem';
     }
     throw Exception('Unsupported DB model type: $type');
   }
 
-  Future<int> insert<T extends BaseDBModel>(T model) async => await _db.insert(
-    _dbName(T),
-    model.toMap(),
-    conflictAlgorithm: ConflictAlgorithm.replace,
-  );
+  Future<int> insert<T extends UserHistModel>(T model) async =>
+      await _db.insert(
+        _dbName(T),
+        model.toMap(),
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
 
-  Future<T?> get<T extends BaseDBModel>(
+  Future<T?> get<T extends UserHistModel>(
     dynamic id, {
     String idColumn = 'workout_id',
   }) async {
@@ -56,7 +57,7 @@ class UserHistDb {
     return res.isNotEmpty ? dbFactories[T]!(res.first) as T : null;
   }
 
-  Future<List<T>> getByDate<T extends BaseDBModel>(
+  Future<List<T>> getByDate<T extends UserHistModel>(
     String date, {
     int? limit,
     bool orderDesc = false,
@@ -71,7 +72,7 @@ class UserHistDb {
     return res.map((map) => dbFactories[T]!(map) as T).toList();
   }
 
-  Future<List<T>> getBeforeDate<T extends BaseDBModel>(
+  Future<List<T>> getBeforeDate<T extends UserHistModel>(
     String date, {
     int? limit,
   }) async {
@@ -85,7 +86,7 @@ class UserHistDb {
     return res.map((map) => dbFactories[T]!(map) as T).toList();
   }
 
-  Future<List<T>> getAfterDate<T extends BaseDBModel>(
+  Future<List<T>> getAfterDate<T extends UserHistModel>(
     String date, {
     int? limit,
   }) async {
@@ -99,7 +100,7 @@ class UserHistDb {
     return res.map((map) => dbFactories[T]!(map) as T).toList();
   }
 
-  Future<List<T>> getAll<T extends BaseDBModel>({
+  Future<List<T>> getAll<T extends UserHistModel>({
     int? limit,
     bool orderDesc = true,
   }) async {
@@ -113,13 +114,13 @@ class UserHistDb {
     return res.map((map) => dbFactories[T]!(map) as T).toList();
   }
 
-  Future<int> update<T extends BaseDBModel>(T model) async => _db.update(
+  Future<int> update<T extends UserHistModel>(T model) async => _db.update(
     _dbName(T),
     model.toMap(),
     where: 'workout_id = ?',
     whereArgs: [model.id],
   );
 
-  Future<int> delete<T extends BaseDBModel>(dynamic id) async =>
+  Future<int> delete<T extends UserHistModel>(dynamic id) async =>
       _db.delete(_dbName(T), where: 'workout_id = ?', whereArgs: [id]);
 }

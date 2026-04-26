@@ -8,7 +8,7 @@ class ExcerciseRepo implements IExcerciseRepo {
   ExcerciseRepo(this._db);
 
   @override
-  Future<Excercise?> getById(int id) async {
+  Future<Exercise?> getById(int id) async {
     try {
       final maps = await _db.query(
         'excercise_table',
@@ -27,7 +27,7 @@ class ExcerciseRepo implements IExcerciseRepo {
   }
 
   @override
-  Future<List<Excercise>> getByLevel(int level) async {
+  Future<List<Exercise>> getByLevel(int level) async {
     try {
       final maps = await _db.query(
         'excercise_table',
@@ -43,7 +43,7 @@ class ExcerciseRepo implements IExcerciseRepo {
   }
 
   @override
-  Future<List<Excercise>> getByCategory(String category) async {
+  Future<List<Exercise>> getByCategory(String category) async {
     try {
       final maps = await _db.query(
         'excercise_table',
@@ -59,7 +59,7 @@ class ExcerciseRepo implements IExcerciseRepo {
   }
 
   @override
-  Future<List<Excercise>> searchByName(String query) async {
+  Future<List<Exercise>> searchByName(String query) async {
     try {
       final maps = await _db.query(
         'excercise_table',
@@ -75,7 +75,7 @@ class ExcerciseRepo implements IExcerciseRepo {
   }
 
   @override
-  Future<List<Excercise>> getAll() async {
+  Future<List<Exercise>> getAll() async {
     try {
       final maps = await _db.query('excercise_table');
       return _mapToEntityList(maps);
@@ -86,7 +86,7 @@ class ExcerciseRepo implements IExcerciseRepo {
   }
 
   @override
-  Future<List<Excercise>> getByMuscleGroup(String muscleGroup) async {
+  Future<List<Exercise>> getByMuscleGroup(String muscleGroup) async {
     try {
       final maps = await _db.query(
         'excercise_table',
@@ -101,7 +101,7 @@ class ExcerciseRepo implements IExcerciseRepo {
     }
   }
 
-  List<Excercise> _mapToEntityList(List<Map<String, dynamic>> maps) {
+  List<Exercise> _mapToEntityList(List<Map<String, dynamic>> maps) {
     return maps.map((map) => ExcerciseModel.fromMap(map).toDomain()).toList();
   }
 }
