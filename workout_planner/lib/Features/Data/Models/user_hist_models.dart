@@ -1,6 +1,7 @@
 class UserHistModel {
   final int id;
   final String exercisesJson;
+  final String muscleGroup;
   final String date;
   final bool isDone;
   final String? notes;
@@ -9,6 +10,7 @@ class UserHistModel {
     required this.id,
     required this.date,
     required this.exercisesJson,
+    required this.muscleGroup,
     this.isDone = false,
     this.notes,
   });
@@ -16,11 +18,11 @@ class UserHistModel {
   factory UserHistModel.fromMap(Map<String, dynamic> map) =>
       _$UserHistModelFromMap(map);
 
-  // @override
   Map<String, dynamic> toMap() {
     return <String, dynamic>{
       'workout_id': id,
       'exercises_json': exercisesJson,
+      'muscle_group': muscleGroup,
       'date': date,
       'isDone': isDone ? 1 : 0,
       'notes': notes,
@@ -31,6 +33,7 @@ class UserHistModel {
       UserHistModel(
         id: map['workout_id'] as int,
         exercisesJson: map['exercises_json'] as String,
+        muscleGroup: map['muscle_group'] as String,
         date: map['date'] as String,
         isDone: (map['isDone'] as int) == 1,
         notes: map['notes'] as String?,

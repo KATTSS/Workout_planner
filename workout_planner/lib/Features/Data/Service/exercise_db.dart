@@ -3,6 +3,7 @@ import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 import 'dart:async';
 import 'dart:io';
+import 'package:workout_planner/Features/Data/Service/query_builder.dart';
 
 class ExerciseDb {
   static ExerciseDb? _instance;
@@ -11,9 +12,9 @@ class ExerciseDb {
     return _instance!;
   }
 
-  static Database? _db;
+  Database? _db;
   final String _assetPath;
-  static bool _isInitializing = false;
+  bool _isInitializing = false;
 
   ExerciseDb._({required String assetPath}) : _assetPath = assetPath;
 
@@ -29,14 +30,14 @@ class ExerciseDb {
 
     _isInitializing = true;
     try {
-      _db = await _initDatabase();
+      _db = await _init();
       return _db!;
     } finally {
       _isInitializing = false;
     }
   }
 
-  Future<Database> _initDatabase() async {
+  Future<Database> _init() async {
     final path = join(await getDatabasesPath(), 'exercise_data.db');
 
     final exists = await databaseExists(path);
@@ -65,30 +66,14 @@ class ExerciseDb {
     }
   }
 
-  Future<List<Map<String, dynamic>>> query(
-    String table, {
-    String? where,
-    List<dynamic>? whereArgs,
-    String? orderBy,
-    int? limit,
-  }) async {
+  Future<List<Map<String, dynamic>>> executeQuery(QueryBuilder builder) async {
     final db = await database;
-    return await db.query(
-      table,
-      where: where,
-      whereArgs: whereArgs,
-      orderBy: orderBy,
-      limit: limit,
-    );
+    return db.rawQuery(builder.build(), builder.args);
   }
 
-  Future<Map<String, dynamic>?> rawQuery(
-    String sql, [
-    List<dynamic>? arguments,
-  ]) async {
-    final db = await database;
-    final result = await db.rawQuery(sql, arguments);
-    return result.isNotEmpty ? result.first : null;
+  Future<Map<String, dynamic>?> executeQuerySingle(QueryBuilder builder) async {
+    final results = await executeQuery(builder);
+    return results.isNotEmpty ? results.first : null;
   }
 
   void dispose() {
@@ -97,43 +82,3 @@ class ExerciseDb {
     _instance = null;
   }
 }
-//   ExerciseDb._();
-//   static final ExerciseDb instance = ExerciseDb._();
-//   static late Database _db;
-//   static bool _isInitialized = false;
-
-//   Future<void> init() async {
-//     if (!_isInitialized) {
-//       final databasePath = await getDatabasesPath();
-//       final path = join(databasePath, 'exercises.db');
-
-//       final exists = await databaseExists(path);
-//       if (!exists) {
-//
-//       final data = await rootBundle.load(_assetPath);
-//       final bytes = data.buffer.asUint8List();
-//       await File(path).writeAsBytes(bytes);
-//     }
-//       _db = await openDatabase(path, version: 1, onCreate: _createDB);
-//       _isInitialized = true;
-//     }
-//   }
-
-//   Future<void> _createDB(Database db, int version) async {
-//     final dbInitScript = await rootBundle.loadString('assets/db_init.sql');
-
-//     for (final element in dbInitScript.split(';')) {
-//       final trimmed = element.trim();
-//       if (trimmed.isEmpty) continue;
-//       await db.execute(trimmed);
-//     }
-//   }
-
-//   String _dbName(Type type) {
-//     if (type == UserHistModel) {
-//       return 'UserHistoryItem';
-//     }
-//     throw Exception('Unsupported DB model type: $type');
-//   }
-
-// }

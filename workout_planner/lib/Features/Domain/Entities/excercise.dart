@@ -110,4 +110,9 @@ class Exercise {
       return PerformanceType.bodyweight;
     }
   }
+
+  @override
+  String toString() {
+    return "Excercise: $name\nLevel: $level\nDescription: $description\nMuscles: $muscle";
+  }
 }

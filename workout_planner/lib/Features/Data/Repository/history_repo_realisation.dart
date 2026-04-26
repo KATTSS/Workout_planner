@@ -1,8 +1,8 @@
-// data/repositories/history_repo_impl.dart
+import 'package:workout_planner/Features/Data/Models/user_hist_models.dart';
+import 'package:workout_planner/Features/Data/Service/query_builder.dart';
 import 'package:workout_planner/Features/Domain/Repository/history_repo.dart';
 import 'package:workout_planner/Features/Domain/Entities/Workout/workout.dart';
 import 'package:workout_planner/Features/Data/Service/user_hist_db.dart';
-// import 'package:workout_planner/Features/Data/Models/user_hist_models.dart';
 import 'package:workout_planner/Features/Data/Repository/Mappers/workout_mapper.dart';
 
 class HistoryRepo implements IHistoryRepo {
@@ -13,147 +13,117 @@ class HistoryRepo implements IHistoryRepo {
   @override
   Future<int> saveWorkout(Workout workout) async {
     final model = WorkoutMapper.toModel(workout);
-
-    if (workout.id <= 0) {
-      final id = await _db.insert(model);
-      return id;
-    } else {
-      await _db.update(model);
-      return workout.id;
-    }
+    final builder = QueryBuilder()
+        .insert(model.toMap())
+        .from('UserHistoryItem');
+    final id = await _db.executeCommand(builder);
+    return id;
   }
 
   @override
   Future<Workout?> getWorkout(int id) async {
-    final map = await _db.get(id);
+    final builder = QueryBuilder()
+        .select()
+        .from('UserHistoryItem')
+        .where('workout_id', '=', id);
+
+    final map = await _db.executeQuerySingle(builder);
     if (map == null) return null;
-    return WorkoutMapper.toDomain(map);
+    final UserHistModel model = UserHistModel.fromMap(map);
+    return WorkoutMapper.toDomain(model);
   }
 
   @override
   Future<void> deleteWorkout(int id) async {
-    await _db.delete(id);
+    final builder = QueryBuilder()
+        .delete()
+        .from('UserHistoryItem')
+        .where('workout_id', '=', id);
+
+    await _db.executeCommand(builder);
+  }
+
+  @override
+  Future<int> updateWorkout(Workout workout) async {
+    final model = WorkoutMapper.toModel(workout);
+
+    final builder = QueryBuilder()
+        .update(model.toMap())
+        .from('UserHistoryItem')
+        .where('workout_id', '=', model.id);
+
+    final id = await _db.executeCommand(builder);
+    return id;
   }
 
   @override
   Future<List<Workout>> getByDate(DateTime date, {int? limit}) async {
     final dateStr = date.toIso8601String().split('T')[0];
-    final maps = await _db.getByDate(dateStr, limit: limit);
-    return maps.map((map) => WorkoutMapper.toDomain(map)).toList();
+
+    final builder = QueryBuilder()
+        .select()
+        .from('UserHistoryItem')
+        .where('date', '=', dateStr)
+        .orderBy('workout_id');
+
+    if (limit != null) builder.limit(limit);
+
+    final maps = await _db.executeQuery(builder);
+    return maps
+        .map((map) => WorkoutMapper.toDomain(UserHistModel.fromMap(map)))
+        .toList();
   }
 
   @override
   Future<List<Workout>> getBeforeDate(DateTime date, {int? limit}) async {
     final dateStr = date.toIso8601String().split('T')[0];
-    final maps = await _db.getBeforeDate(dateStr, limit: limit);
-    return maps.map((map) => WorkoutMapper.toDomain(map)).toList();
+
+    final builder = QueryBuilder()
+        .select()
+        .from('UserHistoryItem')
+        .where('date', '<', dateStr)
+        .orderBy('date', descending: true)
+        .orderBy('workout_id', descending: true);
+
+    if (limit != null) builder.limit(limit);
+
+    final maps = await _db.executeQuery(builder);
+    return maps
+        .map((map) => WorkoutMapper.toDomain(UserHistModel.fromMap(map)))
+        .toList();
   }
 
   @override
   Future<List<Workout>> getAfterDate(DateTime date, {int? limit}) async {
     final dateStr = date.toIso8601String().split('T')[0];
-    final maps = await _db.getAfterDate(dateStr, limit: limit);
-    return maps.map((map) => WorkoutMapper.toDomain(map)).toList();
+
+    final builder = QueryBuilder()
+        .select()
+        .from('UserHistoryItem')
+        .where('date', '>', dateStr)
+        .orderBy('date')
+        .orderBy('workout_id');
+
+    if (limit != null) builder.limit(limit);
+    final maps = await _db.executeQuery(builder);
+    return maps
+        .map((map) => WorkoutMapper.toDomain(UserHistModel.fromMap(map)))
+        .toList();
   }
 
   @override
   Future<List<Workout>> getAll({int? limit, bool newestFirst = true}) async {
-    final maps = await _db.getAll(limit: limit, orderDesc: newestFirst);
-    return maps.map((map) => WorkoutMapper.toDomain(map)).toList();
-  }
+    final builder = QueryBuilder()
+        .select()
+        .from('UserHistoryItem')
+        .orderBy('date', descending: newestFirst)
+        .orderBy('workout_id', descending: newestFirst);
 
-  @override
-  Future<Workout> duplicateWorkout(int id, {DateTime? newDate}) async {
-    final original = await getWorkout(id);
-    if (original == null) throw Exception('Workout not found');
+    if (limit != null) builder.limit(limit);
 
-    final duplicated = Workout(
-      id: 0, // New workout gets ID 0, database will assign new ID
-      date: newDate ?? DateTime.now(),
-      exercises: List.from(original.exercises),
-      isCompleted: false,
-      notes: original.notes,
-    );
-
-    final newId = await saveWorkout(duplicated);
-    return duplicated.copyWith(id: newId);
+    final maps = await _db.executeQuery(builder);
+    return maps
+        .map((map) => WorkoutMapper.toDomain(UserHistModel.fromMap(map)))
+        .toList();
   }
 }
-
-// class HistoryRepo implements IHistoryRepo {
-//   final UserHistDb _db;
-
-//   HistoryRepo(this._db);
-
-//   @override
-//   Future<int> saveWorkout(Workout workout) async {
-//     final model = UserHistModel.fromWorkout(workout);
-
-//     if (workout.id == null) {
-//       final id = await _db.insert(model);
-//       return id;
-//     } else {
-//       await _db.update(model);
-//       return workout.id!;
-//     }
-//   }
-
-//   @override
-//   Future<Workout?> getWorkout(int id) async {
-//     final model = await _db.get<UserHistModel>(id);
-//     if (model == null) return null;
-//     return model.toWorkout();
-//   }
-
-//   @override
-//   Future<void> deleteWorkout(int id) async {
-//     await _db.delete<UserHistModel>(id);
-//   }
-
-//   @override
-//   Future<List<Workout>> getByDate(DateTime date, {int? limit}) async {
-//     final dateStr = date.toIso8601String().split('T')[0];
-//     final models = await _db.getByDate<UserHistModel>(dateStr, limit: limit);
-//     return models.map((model) => model.toWorkout()).toList();
-//   }
-
-//   @override
-//   Future<List<Workout>> getBeforeDate(DateTime date, {int? limit}) async {
-//     final dateStr = date.toIso8601String().split('T')[0];
-//     final models = await _db.getBeforeDate<UserHistModel>(
-//       dateStr,
-//       limit: limit,
-//     );
-//     return models.map((model) => model.toWorkout()).toList();
-//   }
-
-//   @override
-//   Future<List<Workout>> getAfterDate(DateTime date, {int? limit}) async {
-//     final dateStr = date.toIso8601String().split('T')[0];
-//     final models = await _db.getAfterDate<UserHistModel>(dateStr, limit: limit);
-//     return models.map((model) => model.toWorkout()).toList();
-//   }
-
-//   @override
-//   Future<List<Workout>> getAll({int? limit, bool newestFirst = true}) async {
-//     final models = await _db.getAll<UserHistModel>(
-//       limit: limit,
-//       orderDesc: newestFirst,
-//     );
-//     return models.map((model) => model.toWorkout()).toList();
-//   }
-
-//   @override
-//   Future<Workout> duplicateWorkout(int id, {DateTime? newDate}) async {
-//     final original = await getWorkout(id);
-//     if (original == null) throw Exception('Workout not found');
-
-//     return Workout(
-//       id: original.id,
-//       date: newDate ?? DateTime.now(),
-//       exercises: List.from(original.exercises),
-//       isCompleted: false,
-//       notes: original.notes,
-//     );
-//   }
-// }

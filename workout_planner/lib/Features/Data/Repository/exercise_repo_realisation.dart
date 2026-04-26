@@ -1,7 +1,9 @@
 import 'package:workout_planner/Features/Data/Models/exercise_model.dart';
+import 'package:workout_planner/Features/Data/Repository/Mappers/exercise_mapper.dart';
 import 'package:workout_planner/Features/Data/Service/exercise_db.dart';
 import 'package:workout_planner/Features/Domain/Entities/excercise.dart';
 import 'package:workout_planner/Features/Domain/Repository/excercise_repo.dart';
+import 'package:workout_planner/Features/Data/Service/query_builder.dart';
 
 class ExerciseRepo implements IExerciseRepo {
   final ExerciseDb _db;
@@ -9,17 +11,18 @@ class ExerciseRepo implements IExerciseRepo {
 
   @override
   Future<Exercise?> getById(int id) async {
+    final builder = QueryBuilder()
+        .select()
+        .from('excercise_table')
+        .where('id', '=', id);
+
     try {
-      final maps = await _db.query(
-        'excercise_table',
-        where: 'id = ?',
-        whereArgs: [id],
-      );
+      final map = await _db.executeQuerySingle(builder);
 
-      if (maps.isEmpty) return null;
+      if (map == null) return null;
 
-      final model = ExerciseModel.fromMap(maps.first);
-      return model.toDomain();
+      final model = ExerciseModel.fromMap(map);
+      return ExerciseMapper.toDomain(model);
     } catch (e) {
       print('Error getting exercise by id: $e');
       return null;
@@ -28,12 +31,12 @@ class ExerciseRepo implements IExerciseRepo {
 
   @override
   Future<List<Exercise>> getByLevel(int level) async {
+    final builder = QueryBuilder()
+        .select()
+        .from('excercise_table')
+        .where('level', '=', level);
     try {
-      final maps = await _db.query(
-        'excercise_table',
-        where: 'level = ?',
-        whereArgs: [level],
-      );
+      final maps = await _db.executeQuery(builder);
 
       return _mapToEntityList(maps);
     } catch (e) {
@@ -44,12 +47,13 @@ class ExerciseRepo implements IExerciseRepo {
 
   @override
   Future<List<Exercise>> getByCategory(String category) async {
+    final builder = QueryBuilder()
+        .select()
+        .from('excercise_table')
+        .where('category', '=', category);
+
     try {
-      final maps = await _db.query(
-        'excercise_table',
-        where: 'category LIKE ?',
-        whereArgs: ['%$category%'],
-      );
+      final maps = await _db.executeQuery(builder);
 
       return _mapToEntityList(maps);
     } catch (e) {
@@ -59,13 +63,15 @@ class ExerciseRepo implements IExerciseRepo {
   }
 
   @override
-  Future<List<Exercise>> searchByName(String query) async {
+  Future<List<Exercise>> getByName(String query) async {
+    final builder = QueryBuilder()
+        .select()
+        .from('excercise_table')
+        .whereRaw('name LIKE ?', ['%$query%'])
+        .orderBy('name');
+
     try {
-      final maps = await _db.query(
-        'excercise_table',
-        where: 'name LIKE ?',
-        whereArgs: ['%$query%'],
-      );
+      final maps = await _db.executeQuery(builder);
 
       return _mapToEntityList(maps);
     } catch (e) {
@@ -76,8 +82,10 @@ class ExerciseRepo implements IExerciseRepo {
 
   @override
   Future<List<Exercise>> getAll() async {
+    final builder = QueryBuilder().select().from('excercise_table');
+
     try {
-      final maps = await _db.query('excercise_table');
+      final maps = await _db.executeQuery(builder);
       return _mapToEntityList(maps);
     } catch (e) {
       print('Error getting all exercises: $e');
@@ -87,12 +95,14 @@ class ExerciseRepo implements IExerciseRepo {
 
   @override
   Future<List<Exercise>> getByMuscleGroup(String muscleGroup) async {
+    final builder = QueryBuilder()
+        .select()
+        .from('excercise_table')
+        .where('primary_muscles', '=', muscleGroup)
+        .orderBy('name');
+
     try {
-      final maps = await _db.query(
-        'excercise_table',
-        where: 'primary_muscles LIKE ? OR secondary_muscles LIKE ?',
-        whereArgs: ['%$muscleGroup%', '%$muscleGroup%'],
-      );
+      final maps = await _db.executeQuery(builder);
 
       return _mapToEntityList(maps);
     } catch (e) {
@@ -102,6 +112,8 @@ class ExerciseRepo implements IExerciseRepo {
   }
 
   List<Exercise> _mapToEntityList(List<Map<String, dynamic>> maps) {
-    return maps.map((map) => ExerciseModel.fromMap(map).toDomain()).toList();
+    return maps
+        .map((map) => ExerciseMapper.toDomain(ExerciseModel.fromMap(map)))
+        .toList();
   }
 }

@@ -11,16 +11,14 @@ class WorkoutMapper {
       id: workout.id,
       date: workout.date.toIso8601String().split('T')[0],
       exercisesJson: _serializeExercises(workout.exercises),
+      muscleGroup: workout.primaryMuscleGroup,
       isDone: workout.isCompleted,
       notes: workout.notes,
     );
   }
 
-  static Workout toDomain(
-    UserHistModel model, {
-    Map<int, Exercise>? exerciseMap,
-  }) {
-    final exercises = _deserializeExercises(model.exercisesJson, exerciseMap);
+  static Workout toDomain(UserHistModel model) {
+    final exercises = _deserializeExercises(model.exercisesJson);
     return Workout(
       id: model.id,
       date: DateTime.parse(model.date),
@@ -53,10 +51,7 @@ class WorkoutMapper {
     }).toList();
   }
 
-  static List<ExercisePerformance> _deserializeExercises(
-    String exercisesJson,
-    Map<int, Exercise>? exerciseMap,
-  ) {
+  static List<ExercisePerformance> _deserializeExercises(String exercisesJson) {
     if (exercisesJson.isEmpty) return [];
 
     final List<dynamic> jsonList = jsonDecode(exercisesJson);
@@ -64,27 +59,19 @@ class WorkoutMapper {
     return jsonList.map((item) {
       final exerciseId = item['exerciseId'] as int;
       final setsJson = item['sets'] as List<dynamic>;
+      final exerciseCat = item['category'] as String;
+      final exerciseEq = Equipment.fromString(item['equipment'] as String);
 
-      // Get Exercise from mapping or create temporary one
-      Exercise exercise;
-      if (exerciseMap != null && exerciseMap.containsKey(exerciseId)) {
-        exercise = exerciseMap[exerciseId]!;
-      } else {
-        // Placeholder when mapping is not provided
-        final category = _parseCategory(item['category'] as String?);
-        final equipment = _parseEquipment(item['equipment'] as String?);
-
-        exercise = Exercise(
-          id: exerciseId,
-          name: 'Exercise #$exerciseId',
-          level: 1,
-          category: category,
-          equipment: equipment,
-          description: '',
-          muscle: '',
-          secondaryMuscle: '',
-        );
-      }
+      Exercise exercise = Exercise(
+        id: exerciseId,
+        name: "ex",
+        level: 0,
+        category: _parseCategory(exerciseCat),
+        equipment: exerciseEq,
+        description: "",
+        muscle: "",
+        secondaryMuscle: "",
+      );
 
       final sets = _deserializeSets(setsJson);
 
@@ -102,17 +89,18 @@ class WorkoutMapper {
     }).toList();
   }
 
-  static ExerciseCategory _parseCategory(String? category) {
-    if (category == null) return ExerciseCategory.strength;
+  static ExerciseCategory _parseCategory(String category) {
     try {
-      return ExerciseCategory.values.firstWhere((e) => e.name == category);
+      return ExerciseCategory.values.firstWhere(
+        (e) => e.name.toLowerCase() == category.toLowerCase(),
+      );
     } catch (_) {
-      return ExerciseCategory.strength;
+      switch (category.toLowerCase()) {
+        case 'olympic weightlifting':
+          return ExerciseCategory.olympicWeightlifting;
+        default:
+          return ExerciseCategory.strength;
+      }
     }
-  }
-
-  static Equipment _parseEquipment(String? equipment) {
-    if (equipment == null) return Equipment.other;
-    return Equipment.fromString(equipment);
   }
 }

@@ -13,7 +13,7 @@ abstract class IExerciseRepo {
 
   Future<List<Exercise>> getByCategory(String category);
 
-  Future<List<Exercise>> searchByName(String query);
+  Future<List<Exercise>> getByName(String query);
 
   Future<List<Exercise>> getAll();
 
