@@ -1,11 +1,11 @@
-import 'package:workout_planner/Features/Data/Models/excercise_model.dart';
-import 'package:workout_planner/Features/Data/Service/excercise_db.dart';
+import 'package:workout_planner/Features/Data/Models/exercise_model.dart';
+import 'package:workout_planner/Features/Data/Service/exercise_db.dart';
 import 'package:workout_planner/Features/Domain/Entities/excercise.dart';
 import 'package:workout_planner/Features/Domain/Repository/excercise_repo.dart';
 
-class ExcerciseRepo implements IExcerciseRepo {
-  final ExcerciseDb _db;
-  ExcerciseRepo(this._db);
+class ExerciseRepo implements IExerciseRepo {
+  final ExerciseDb _db;
+  ExerciseRepo(this._db);
 
   @override
   Future<Exercise?> getById(int id) async {
@@ -18,7 +18,7 @@ class ExcerciseRepo implements IExcerciseRepo {
 
       if (maps.isEmpty) return null;
 
-      final model = ExcerciseModel.fromMap(maps.first);
+      final model = ExerciseModel.fromMap(maps.first);
       return model.toDomain();
     } catch (e) {
       print('Error getting exercise by id: $e');
@@ -102,6 +102,6 @@ class ExcerciseRepo implements IExcerciseRepo {
   }
 
   List<Exercise> _mapToEntityList(List<Map<String, dynamic>> maps) {
-    return maps.map((map) => ExcerciseModel.fromMap(map).toDomain()).toList();
+    return maps.map((map) => ExerciseModel.fromMap(map).toDomain()).toList();
   }
 }

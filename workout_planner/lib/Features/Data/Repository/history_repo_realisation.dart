@@ -3,7 +3,7 @@ import 'package:workout_planner/Features/Domain/Repository/history_repo.dart';
 import 'package:workout_planner/Features/Domain/Entities/Workout/workout.dart';
 import 'package:workout_planner/Features/Data/Service/user_hist_db.dart';
 // import 'package:workout_planner/Features/Data/Models/user_hist_models.dart';
-import 'package:workout_planner/Features/Data/Repository/workout_mapper.dart';
+import 'package:workout_planner/Features/Data/Repository/Mappers/workout_mapper.dart';
 
 class HistoryRepo implements IHistoryRepo {
   final UserHistDb _db;

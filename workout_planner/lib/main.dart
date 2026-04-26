@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:workout_planner/Features/Data/Repository/history_repo_realisation.dart';
-import 'package:workout_planner/Features/Data/Repository/excercise_repo_realisation.dart';
-import 'package:workout_planner/Features/Data/Service/excercise_db.dart';
+import 'package:workout_planner/Features/Data/Repository/exercise_repo_realisation.dart';
+import 'package:workout_planner/Features/Data/Service/exercise_db.dart';
 import 'package:workout_planner/Features/Data/Service/user_hist_db.dart';
 import 'package:workout_planner/Features/Domain/Entities/Performance/ex_perfomance.dart';
 import 'package:workout_planner/Features/Domain/Entities/Performance/set_data.dart';
@@ -44,7 +44,7 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   late final HistoryRepo _historyRepo;
-  late final ExcerciseRepo _excerciseRepo;
+  late final ExerciseRepo _ExerciseRepo;
 
   String _exerciseDbStatus = 'Testing...';
   String _historyDbStatus = 'Testing...';
@@ -54,7 +54,7 @@ class _MyHomePageState extends State<MyHomePage> {
   void initState() {
     super.initState();
     _historyRepo = HistoryRepo(UserHistDb.instance);
-    _excerciseRepo = ExcerciseRepo(ExcerciseDb.instance);
+    _ExerciseRepo = ExerciseRepo(ExerciseDb.instance);
     _runDiagnostics();
   }
 
@@ -62,7 +62,7 @@ class _MyHomePageState extends State<MyHomePage> {
     setState(() => _isLoading = true);
 
     try {
-      final exercise = await _excerciseRepo.searchByName(
+      final exercise = await _ExerciseRepo.searchByName(
         'Advanced Kettlebell Windmill',
       );
       if (exercise != null) {

@@ -1,9 +1,8 @@
-import 'package:workout_planner/Features/Data/Models/base_db_model.dart';
 import 'package:workout_planner/Features/Domain/Entities/excercise.dart';
 
-// class ExcerciseModel implements BaseDBModel {
- // @override
-class ExcerciseModel {
+// class ExerciseModel implements BaseDBModel {
+// @override
+class ExerciseModel {
   final int id;
   final String name;
   final int level;
@@ -13,7 +12,7 @@ class ExcerciseModel {
   final String primaryMusclesList;
   final String? secondaryMusclesList;
 
-  ExcerciseModel({
+  ExerciseModel({
     required this.id,
     required this.name,
     required this.level,
@@ -24,11 +23,11 @@ class ExcerciseModel {
     this.secondaryMusclesList = '',
   });
 
-  factory ExcerciseModel.fromMap(Map<String, dynamic> map) =>
-      _$ExcerciseModelFromMap(map);
+  factory ExerciseModel.fromMap(Map<String, dynamic> map) =>
+      _$ExerciseModelFromMap(map);
 
-  static ExcerciseModel _$ExcerciseModelFromMap(Map<String, dynamic> map) =>
-      ExcerciseModel(
+  static ExerciseModel _$ExerciseModelFromMap(Map<String, dynamic> map) =>
+      ExerciseModel(
         id: map['id'] as int,
         name: map['name'] as String,
         level: map['level'] as int,
@@ -40,18 +39,18 @@ class ExcerciseModel {
       );
 
   // @override
-  Map<String, dynamic> toMap() {
-    return <String, dynamic>{
-      'index': id,
-      'name': name,
-      'level': level,
-      'category': category,
-      'equipment': equipment,
-      'description': description,
-      'primary_muscles': primaryMusclesList,
-      'secondary_muscles': secondaryMusclesList ?? '',
-    };
-  }
+  // Map<String, dynamic> toMap() {
+  //   return <String, dynamic>{
+  //     'index': id,
+  //     'name': name,
+  //     'level': level,
+  //     'category': category,
+  //     'equipment': equipment,
+  //     'description': description,
+  //     'primary_muscles': primaryMusclesList,
+  //     'secondary_muscles': secondaryMusclesList ?? '',
+  //   };
+  // }
 
   Exercise toDomain() {
     return Exercise(
@@ -67,18 +66,18 @@ class ExcerciseModel {
   }
 
   // Создание из доменной модели
-  factory ExcerciseModel.fromDomain(Exercise exercise) {
-    return ExcerciseModel(
-      id: exercise.id,
-      name: exercise.name,
-      level: exercise.level,
-      category: exercise.category.name,
-      equipment: exercise.equipment.name,
-      description: exercise.description,
-      primaryMusclesList: exercise.muscle,
-      secondaryMusclesList: exercise.secondaryMuscle,
-    );
-  }
+  // factory ExerciseModel.fromDomain(Exercise exercise) {
+  //   return ExerciseModel(
+  //     id: exercise.id,
+  //     name: exercise.name,
+  //     level: exercise.level,
+  //     category: exercise.category.name,
+  //     equipment: exercise.equipment.name,
+  //     description: exercise.description,
+  //     primaryMusclesList: exercise.muscle,
+  //     secondaryMusclesList: exercise.secondaryMuscle,
+  //   );
+  // }
 
   static ExerciseCategory _parseCategory(String category) {
     try {

@@ -4,12 +4,10 @@ import 'package:sqflite/sqflite.dart';
 import 'dart:async';
 import 'dart:io';
 
-class ExcerciseDb {
-  static ExcerciseDb? _instance;
-  static ExcerciseDb get instance {
-    _instance ??= ExcerciseDb._(
-      assetPath: 'assets/databases/excercise_data.db',
-    );
+class ExerciseDb {
+  static ExerciseDb? _instance;
+  static ExerciseDb get instance {
+    _instance ??= ExerciseDb._(assetPath: 'assets/databases/excercise_data.db');
     return _instance!;
   }
 
@@ -17,7 +15,7 @@ class ExcerciseDb {
   final String _assetPath;
   static bool _isInitializing = false;
 
-  ExcerciseDb._({required String assetPath}) : _assetPath = assetPath;
+  ExerciseDb._({required String assetPath}) : _assetPath = assetPath;
 
   Future<Database> get database async {
     if (_db != null) return _db!;
@@ -99,8 +97,8 @@ class ExcerciseDb {
     _instance = null;
   }
 }
-//   ExcerciseDb._();
-//   static final ExcerciseDb instance = ExcerciseDb._();
+//   ExerciseDb._();
+//   static final ExerciseDb instance = ExerciseDb._();
 //   static late Database _db;
 //   static bool _isInitialized = false;
 

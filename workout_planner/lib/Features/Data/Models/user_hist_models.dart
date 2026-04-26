@@ -1,12 +1,3 @@
-// user_hist_models.dart
-import 'package:workout_planner/Features/Data/Models/base_db_model.dart';
-// import 'package:workout_planner/Features/Domain/Entities/Workout/workout.dart';
-// import 'package:workout_planner/Features/Domain/Entities/Performance/ex_perfomance.dart';
-// import 'package:workout_planner/Features/Domain/Entities/excercise.dart';
-// import 'package:workout_planner/Features/Domain/Entities/Performance/set_data.dart';
-
-// class UserHistModel extends BaseDBModel {
-//   @override
 class UserHistModel {
   final int id;
   final String exercisesJson;

@@ -27,7 +27,7 @@ abstract class IHistoryRepo {
     
 }
 
-abstract class IExcerciseRepo {
+abstract class IExerciseRepo {
     + getById(id: int): Future<Excercise?>
     + getByLevel(level: int): Future<List<Excercise>>
     + getByCategory(category: String): Future<List<Excercise>>
@@ -37,6 +37,6 @@ abstract class IExcerciseRepo {
 }
 
 IHistoryRepo ..> WorkoutHistory
-IExcerciseRepo ..> Excercise
+IExerciseRepo ..> Excercise
 
 @enduml
