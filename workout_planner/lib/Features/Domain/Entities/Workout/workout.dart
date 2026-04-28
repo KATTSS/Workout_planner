@@ -19,14 +19,11 @@ class Workout {
   String get primaryMuscleGroup {
     if (exercises.isEmpty) return 'Full Body';
 
-    // Собираем статистику по группам мышц
     final muscleCount = <String, int>{};
     for (final exercise in exercises) {
       final muscle = exercise.exercise.muscle;
       muscleCount[muscle] = (muscleCount[muscle] ?? 0) + 1;
     }
-
-    // Возвращаем наиболее частую группу мышц
     return muscleCount.entries.reduce((a, b) => a.value > b.value ? a : b).key;
   }
 
@@ -45,7 +42,6 @@ class Workout {
 
   int get exerciseCount => exercises.length;
 
-  // Методы для неизменяемых обновлений (Immutable updates)
   Workout updateDate(DateTime newDate) {
     return Workout(
       id: id,
@@ -102,7 +98,6 @@ class Workout {
     );
   }
 
-  // Методы для работы с упражнениями
   Workout addExercise(ExercisePerformance exercise) {
     final updatedExercises = List<ExercisePerformance>.from(exercises)
       ..add(exercise);
@@ -145,7 +140,6 @@ class Workout {
     return replaceExercise(exerciseId, newExercise);
   }
 
-  // Методы для работы с сетами упражнений
   Workout addSet(int exerciseId, SetData set) {
     final updatedExercises = exercises.map((ex) {
       if (ex.exerciseId != exerciseId) return ex;
@@ -248,6 +242,21 @@ class Workout {
 
   @override
   String toString() {
-    return 'Workout(id: $id, date: $date, exercises: ${exercises.length}, completed: $isCompleted)';
+    final buffer = StringBuffer();
+    buffer.writeln('Workout #$id - ${date.toString().split(' ')[0]}');
+    buffer.writeln('Status: ${isCompleted ? "Done" : "Draft"}');
+    if (notes != null) buffer.writeln('Notes: $notes');
+    buffer.writeln('Exercises:');
+
+    for (var i = 0; i < exercises.length; i++) {
+      final ex = exercises[i];
+      buffer.writeln('  ${i + 1}. ${ex.exercise.name} (${ex.setsCount} sets)');
+      for (var j = 0; j < ex.sets.length; j++) {
+        buffer.writeln('     Set ${j + 1}: ${ex.sets[j]}');
+      }
+    }
+
+    buffer.writeln('Total: $exerciseCount exercises, $totalSets sets');
+    return buffer.toString();
   }
 }

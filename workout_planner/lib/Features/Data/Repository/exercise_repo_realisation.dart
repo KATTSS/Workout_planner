@@ -111,6 +111,25 @@ class ExerciseRepo implements IExerciseRepo {
     }
   }
 
+  @override
+  Future<List<Exercise>> getByIds(List<int> ids) async {
+    if (ids.isEmpty) return [];
+
+    final placeholders = ids.map((_) => '?').join(',');
+    final builder = QueryBuilder()
+        .select()
+        .from('excercise_table')
+        .whereRaw('id IN ($placeholders)', ids);
+
+    try {
+      final maps = await _db.executeQuery(builder);
+      return _mapToEntityList(maps);
+    } catch (e) {
+      print('Error getting exercises by ids: $e');
+      return [];
+    }
+  }
+
   List<Exercise> _mapToEntityList(List<Map<String, dynamic>> maps) {
     return maps
         .map((map) => ExerciseMapper.toDomain(ExerciseModel.fromMap(map)))

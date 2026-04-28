@@ -1,13 +1,9 @@
 import 'package:workout_planner/Features/Domain/Entities/excercise.dart';
 
-// abstract class IExerciseRepo {
-//   Future<Excercise?> getExcercise(int id);
-//   Future<List<Excercise?>> getExcerciseByLevel(int level);
-//   Future<List<Excercise?>> getExcerciseByString(String column, String value);
-// }
-
 abstract class IExerciseRepo {
   Future<Exercise?> getById(int id);
+
+  Future<List<Exercise>> getByIds(List<int> ids);
 
   Future<List<Exercise>> getByLevel(int level);
 

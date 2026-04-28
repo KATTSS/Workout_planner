@@ -20,7 +20,6 @@ abstract class ExercisePerformance {
   int? getRepsForSet(int setIndex);
   double? getDurationForSet(int setIndex);
 
-  // Методы для создания новых иммутабельных копий
   ExercisePerformance addSet(SetData set);
   ExercisePerformance removeSet(int setIndex);
   ExercisePerformance updateSet(int setIndex, SetData newSet);

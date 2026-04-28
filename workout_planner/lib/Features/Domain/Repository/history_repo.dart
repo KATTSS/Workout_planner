@@ -1,4 +1,3 @@
-// domain/repository/history_repo.dart
 import 'package:workout_planner/Features/Domain/Entities/Workout/workout.dart';
 
 abstract class IHistoryRepo {
@@ -11,5 +10,4 @@ abstract class IHistoryRepo {
   Future<List<Workout>> getBeforeDate(DateTime date, {int? limit});
   Future<List<Workout>> getAfterDate(DateTime date, {int? limit});
   Future<List<Workout>> getAll({int? limit, bool newestFirst = true});
-  //  Future<Workout> duplicateWorkout(int id, {DateTime? newDate});
 }

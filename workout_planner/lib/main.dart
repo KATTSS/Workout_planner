@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:workout_planner/Features/Data/Repository/history_repo_realisation.dart';
 import 'package:workout_planner/Features/Data/Repository/exercise_repo_realisation.dart';
 import 'package:workout_planner/Features/Data/Service/exercise_db.dart';
+import 'package:workout_planner/Features/Data/Service/local_workout_data_source.dart';
 import 'package:workout_planner/Features/Data/Service/user_hist_db.dart';
 import 'Features/Domain/Entities/Performance/set_data.dart';
 import 'Features/Domain/Entities/Workout/workout_builder.dart';
@@ -43,6 +44,7 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   late final HistoryRepo _historyRepo;
   late final ExerciseRepo _ExerciseRepo;
+  late final LocalWorkoutDataSource _localWorkoutDataSource;
 
   String _exerciseDbStatus = 'Testing...';
   String _historyDbStatus = 'Testing...';
@@ -51,16 +53,17 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   void initState() {
     super.initState();
-    _historyRepo = HistoryRepo(UserHistDb.instance);
+    _localWorkoutDataSource = LocalWorkoutDataSource(UserHistDb.instance);
     _ExerciseRepo = ExerciseRepo(ExerciseDb.instance);
+    _historyRepo = HistoryRepo(_localWorkoutDataSource, _ExerciseRepo);
     _runDiagnostics();
   }
 
   Future<void> _runDiagnostics() async {
     setState(() => _isLoading = true);
-
+    List<Exercise> exercise = List.empty();
     try {
-      final exercise = await _ExerciseRepo.getByName('Advanced Kettlebell');
+      exercise = await _ExerciseRepo.getByName('Advanced Kettlebell');
       if (exercise != null) {
         _exerciseDbStatus =
             '✅ Success! Found Exercise ID: ${exercise.toString()}';
@@ -70,38 +73,45 @@ class _MyHomePageState extends State<MyHomePage> {
     }
 
     try {
-      final testId = DateTime.now().millisecondsSinceEpoch % 100000;
-      final ex = Exercise(
-        id: testId,
-        name: "test ex",
-        level: 2,
-        category: ExerciseCategory.cardio,
-        equipment: Equipment.bodyOnly,
-        description: "jump and run",
-        muscle: "legs",
-        secondaryMuscle: "arms",
+      final testExercise = exercise.first;
+
+      final testSet = SetData(reps: 10, weight: 1.0);
+      final secondSet = SetData(reps: 12, weight: 1.2);
+
+      final exercisePerformance = ExercisePerformance.create(
+        exercise: testExercise,
+        sets: [testSet, secondSet],
       );
-      final set = SetData.duration(duration: 2.5);
-      var exx = ExercisePerformance.create(exercise: ex, sets: [set]);
+
       final testWorkout = WorkoutBuilder()
-          .addExercise(exx)
-          .setNotes("testing")
+          .addExercise(exercisePerformance)
+          .addExercise(exercisePerformance)
+          .setNotes("Testing database functionality")
           .setDate(DateTime.now())
           .build();
 
       final savedId = await _historyRepo.saveWorkout(testWorkout);
-      _historyDbStatus = savedId.toString();
 
-      final retrieved = await _historyRepo.getWorkout(savedId);
+      if (savedId > 0) {
+        _historyDbStatus = '✅ Success! Record saved with ID: $savedId. ';
 
-      if (retrieved != null) {
-        _historyDbStatus = '✅ Success! Test record saved and retrieved.';
-        _historyDbStatus = retrieved.date.toIso8601String();
+        final retrieved = await _historyRepo.getWorkout(savedId);
+
+        if (retrieved != null) {
+          _historyDbStatus +=
+              'Retrieved: ${retrieved.exercises.length} exercise(s), Date: ${retrieved.date.toString().split(' ')[0]}, ${retrieved.totalSets}.\n ${retrieved.toString()} ';
+
+          final allWorkouts = await _historyRepo.getAll(limit: 2);
+          _historyDbStatus += 'Total workouts in DB: ${allWorkouts.length}.';
+        } else {
+          _historyDbStatus += '❌ Failed to retrieve the record after saving.';
+        }
       } else {
-        _historyDbStatus = '❌ Failed to retrieve the record after saving.';
+        _historyDbStatus = '❌ Failed to save workout (returned ID: $savedId).';
       }
     } catch (e) {
       _historyDbStatus = '❌ Error: $e';
+      print('Detailed error: $e');
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
