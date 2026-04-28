@@ -5,9 +5,8 @@ import 'package:workout_planner/Features/Data/Service/exercise_db.dart';
 import 'package:workout_planner/Features/Data/Service/local_workout_data_source.dart';
 import 'package:workout_planner/Features/Data/Service/user_hist_db.dart';
 import 'Features/Domain/Entities/Performance/set_data.dart';
-import 'Features/Domain/Entities/Workout/workout_builder.dart';
-import 'Features/Domain/Entities/excercise.dart';
 import 'Features/Domain/Entities/Performance/ex_perfomance.dart';
+import 'Features/Application/Workout/workout_builder.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -61,56 +60,58 @@ class _MyHomePageState extends State<MyHomePage> {
 
   Future<void> _runDiagnostics() async {
     setState(() => _isLoading = true);
-    List<Exercise> exercise = List.empty();
+
     try {
-      exercise = await _ExerciseRepo.getByName('Advanced Kettlebell');
-      if (exercise != null) {
+      final exercises = await _ExerciseRepo.getByName('Advanced Kettlebell');
+
+      if (exercises.isNotEmpty) {
         _exerciseDbStatus =
-            '✅ Success! Found Exercise ID: ${exercise.toString()}';
-      }
-    } catch (e) {
-      _exerciseDbStatus = '❌ Error: $e';
-    }
-
-    try {
-      final testExercise = exercise.first;
-
-      final testSet = SetData(reps: 10, weight: 1.0);
-      final secondSet = SetData(reps: 12, weight: 1.2);
-
-      final exercisePerformance = ExercisePerformance.create(
-        exercise: testExercise,
-        sets: [testSet, secondSet],
-      );
-
-      final testWorkout = WorkoutBuilder()
-          .addExercise(exercisePerformance)
-          .addExercise(exercisePerformance)
-          .setNotes("Testing database functionality")
-          .setDate(DateTime.now())
-          .build();
-
-      final savedId = await _historyRepo.saveWorkout(testWorkout);
-
-      if (savedId > 0) {
-        _historyDbStatus = '✅ Success! Record saved with ID: $savedId. ';
-
-        final retrieved = await _historyRepo.getWorkout(savedId);
-
-        if (retrieved != null) {
-          _historyDbStatus +=
-              'Retrieved: ${retrieved.exercises.length} exercise(s), Date: ${retrieved.date.toString().split(' ')[0]}, ${retrieved.totalSets}.\n ${retrieved.toString()} ';
-
-          final allWorkouts = await _historyRepo.getAll(limit: 2);
-          _historyDbStatus += 'Total workouts in DB: ${allWorkouts.length}.';
-        } else {
-          _historyDbStatus += '❌ Failed to retrieve the record after saving.';
-        }
+            'Success! Found ${exercises.length} exercise(s): ${exercises.first.toString()}';
       } else {
-        _historyDbStatus = '❌ Failed to save workout (returned ID: $savedId).';
+        _exerciseDbStatus = 'No exercises found with that name';
+      }
+
+      if (exercises.isNotEmpty) {
+        final testExercise = exercises.first;
+
+        final testSet = SetData(reps: 10, weight: 1.0);
+        final secondSet = SetData(reps: 12, weight: 1.2);
+
+        final exercisePerformance = ExercisePerformance.create(
+          exercise: testExercise,
+          sets: [testSet, secondSet],
+        );
+
+        final testWorkout = WorkoutBuilder()
+            .addExercise(exercisePerformance)
+            .setNotes("Testing database functionality")
+            .setDate(DateTime.now())
+            .build();
+
+        final savedId = await _historyRepo.saveWorkout(testWorkout);
+
+        if (savedId > 0) {
+          _historyDbStatus = 'Success! Record saved with ID: $savedId. ';
+
+          final retrieved = await _historyRepo.getWorkout(savedId);
+
+          if (retrieved != null) {
+            _historyDbStatus +=
+                'Retrieved: ${retrieved.exercises.length} exercise(s), Date: ${retrieved.date.toString().split(' ')[0]}, Total sets: ${retrieved.totalSets}.\n ${retrieved.toString()}';
+
+            final allWorkouts = await _historyRepo.getAll(limit: 2);
+            _historyDbStatus +=
+                '\nTotal workouts in DB: ${allWorkouts.length}.';
+          } else {
+            _historyDbStatus += 'Failed to retrieve the record after saving.';
+          }
+        } else {
+          _historyDbStatus = 'Failed to save workout (returned ID: $savedId).';
+        }
       }
     } catch (e) {
-      _historyDbStatus = '❌ Error: $e';
+      _exerciseDbStatus = 'Error: $e';
+      _historyDbStatus = 'Error: $e';
       print('Detailed error: $e');
     } finally {
       if (mounted) {
@@ -136,38 +137,46 @@ class _MyHomePageState extends State<MyHomePage> {
         padding: const EdgeInsets.all(16.0),
         child: _isLoading
             ? const Center(child: CircularProgressIndicator())
-            : Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Exercise Database (ReadOnly Assets):',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-                  ),
-                  const SizedBox(height: 8),
-                  _buildStatusBox(_exerciseDbStatus),
-                  const SizedBox(height: 24),
-                  const Text(
-                    'User History Database (Read/Write):',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-                  ),
-                  const SizedBox(height: 8),
-                  _buildStatusBox(_historyDbStatus),
-                  const Spacer(),
-                  const Text(
-                    'Note: If Exercise DB fails, check if assets/databases/excercise_data.db is in pubspec.yaml',
-                    style: TextStyle(
-                      fontStyle: FontStyle.italic,
-                      color: Colors.grey,
+            : SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Exercise Database (ReadOnly Assets):',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18,
+                      ),
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 8),
+                    _buildStatusBox(_exerciseDbStatus),
+                    const SizedBox(height: 24),
+                    const Text(
+                      'User History Database (Read/Write):',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    _buildStatusBox(_historyDbStatus),
+                    const SizedBox(height: 24),
+                    const Text(
+                      'Note: If Exercise DB fails, check if assets/databases/excercise_data.db is in pubspec.yaml',
+                      style: TextStyle(
+                        fontStyle: FontStyle.italic,
+                        color: Colors.grey,
+                      ),
+                    ),
+                  ],
+                ),
               ),
       ),
     );
   }
 
   Widget _buildStatusBox(String text) {
-    bool isError = text.contains('❌');
+    bool isError = text.contains('Error');
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(12),
