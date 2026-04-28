@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:workout_planner/Features/Data/Repository/history_repo_realisation.dart';
-import 'package:workout_planner/Features/Data/Repository/excercise_repo_realisation.dart';
-import 'package:workout_planner/Features/Data/Service/excercise_db.dart';
+import 'package:workout_planner/Features/Data/Repository/exercise_repo_realisation.dart';
+import 'package:workout_planner/Features/Data/Service/exercise_db.dart';
+import 'package:workout_planner/Features/Data/Service/local_workout_data_source.dart';
 import 'package:workout_planner/Features/Data/Service/user_hist_db.dart';
-import 'package:workout_planner/Features/Domain/Entities/excercise.dart';
-import 'package:workout_planner/Features/Domain/Entities/workout_history.dart';
+import 'Features/Domain/Entities/Performance/set_data.dart';
+import 'Features/Domain/Entities/Performance/ex_perfomance.dart';
+import 'Features/Application/Workout/workout_builder.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -40,7 +42,8 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   late final HistoryRepo _historyRepo;
-  late final ExcerciseRepo _excerciseRepo;
+  late final ExerciseRepo _ExerciseRepo;
+  late final LocalWorkoutDataSource _localWorkoutDataSource;
 
   String _exerciseDbStatus = 'Testing...';
   String _historyDbStatus = 'Testing...';
@@ -49,8 +52,9 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   void initState() {
     super.initState();
-    _historyRepo = HistoryRepo(UserHistDb.instance);
-    _excerciseRepo = ExcerciseRepo(ExcerciseDb.instance);
+    _localWorkoutDataSource = LocalWorkoutDataSource(UserHistDb.instance);
+    _ExerciseRepo = ExerciseRepo(ExerciseDb.instance);
+    _historyRepo = HistoryRepo(_localWorkoutDataSource, _ExerciseRepo);
     _runDiagnostics();
   }
 
@@ -58,39 +62,57 @@ class _MyHomePageState extends State<MyHomePage> {
     setState(() => _isLoading = true);
 
     try {
-      final exercise = await _excerciseRepo.searchByName(
-        'Advanced Kettlebell Windmill',
-      );
-      if (exercise != null) {
+      final exercises = await _ExerciseRepo.getByName('Advanced Kettlebell');
+
+      if (exercises.isNotEmpty) {
         _exerciseDbStatus =
-            '✅ Success! Found Exercise ID: ${exercise.toString()}';
+            'Success! Found ${exercises.length} exercise(s): ${exercises.first.toString()}';
       } else {
-        _exerciseDbStatus =
-            '⚠️ Connected, but Exercise ID 1 not found (DB might be empty).';
+        _exerciseDbStatus = 'No exercises found with that name';
       }
 
-      final testId = DateTime.now().millisecondsSinceEpoch % 100000;
-      final testWorkout = WorkoutHistory(
-        id: testId,
-        date: DateTime.now(),
-        muscleGroup: 'Test Group',
-        excerciseList: 'Test Push-up',
-        isDone: true,
-      );
+      if (exercises.isNotEmpty) {
+        final testExercise = exercises.first;
 
-      await _historyRepo.saveHistory(testWorkout);
+        final testSet = SetData(reps: 10, weight: 1.0);
+        final secondSet = SetData(reps: 12, weight: 1.2);
 
-      final retrieved = await _historyRepo.getHistory(testId);
+        final exercisePerformance = ExercisePerformance.create(
+          exercise: testExercise,
+          sets: [testSet, secondSet],
+        );
 
-      if (retrieved != null && retrieved.muscleGroup == 'Test Group') {
-        _historyDbStatus =
-            '✅ Success! Test record saved and retrieved (ID: $testId).';
-      } else {
-        _historyDbStatus = '❌ Failed to retrieve the record after saving.';
+        final testWorkout = WorkoutBuilder()
+            .addExercise(exercisePerformance)
+            .setNotes("Testing database functionality")
+            .setDate(DateTime.now())
+            .build();
+
+        final savedId = await _historyRepo.saveWorkout(testWorkout);
+
+        if (savedId > 0) {
+          _historyDbStatus = 'Success! Record saved with ID: $savedId. ';
+
+          final retrieved = await _historyRepo.getWorkout(savedId);
+
+          if (retrieved != null) {
+            _historyDbStatus +=
+                'Retrieved: ${retrieved.exercises.length} exercise(s), Date: ${retrieved.date.toString().split(' ')[0]}, Total sets: ${retrieved.totalSets}.\n ${retrieved.toString()}';
+
+            final allWorkouts = await _historyRepo.getAll(limit: 2);
+            _historyDbStatus +=
+                '\nTotal workouts in DB: ${allWorkouts.length}.';
+          } else {
+            _historyDbStatus += 'Failed to retrieve the record after saving.';
+          }
+        } else {
+          _historyDbStatus = 'Failed to save workout (returned ID: $savedId).';
+        }
       }
     } catch (e) {
-      _exerciseDbStatus = '❌ Error: $e';
-      _historyDbStatus = '❌ Error: $e';
+      _exerciseDbStatus = 'Error: $e';
+      _historyDbStatus = 'Error: $e';
+      print('Detailed error: $e');
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
@@ -115,38 +137,46 @@ class _MyHomePageState extends State<MyHomePage> {
         padding: const EdgeInsets.all(16.0),
         child: _isLoading
             ? const Center(child: CircularProgressIndicator())
-            : Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Exercise Database (ReadOnly Assets):',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-                  ),
-                  const SizedBox(height: 8),
-                  _buildStatusBox(_exerciseDbStatus),
-                  const SizedBox(height: 24),
-                  const Text(
-                    'User History Database (Read/Write):',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-                  ),
-                  const SizedBox(height: 8),
-                  _buildStatusBox(_historyDbStatus),
-                  const Spacer(),
-                  const Text(
-                    'Note: If Exercise DB fails, check if assets/databases/excercise_data.db is in pubspec.yaml',
-                    style: TextStyle(
-                      fontStyle: FontStyle.italic,
-                      color: Colors.grey,
+            : SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Exercise Database (ReadOnly Assets):',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18,
+                      ),
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 8),
+                    _buildStatusBox(_exerciseDbStatus),
+                    const SizedBox(height: 24),
+                    const Text(
+                      'User History Database (Read/Write):',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    _buildStatusBox(_historyDbStatus),
+                    const SizedBox(height: 24),
+                    const Text(
+                      'Note: If Exercise DB fails, check if assets/databases/excercise_data.db is in pubspec.yaml',
+                      style: TextStyle(
+                        fontStyle: FontStyle.italic,
+                        color: Colors.grey,
+                      ),
+                    ),
+                  ],
+                ),
               ),
       ),
     );
   }
 
   Widget _buildStatusBox(String text) {
-    bool isError = text.contains('❌');
+    bool isError = text.contains('Error');
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(12),

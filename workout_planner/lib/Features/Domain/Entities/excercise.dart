@@ -1,123 +1,118 @@
-// import 'equipment.dart' show Equipment;
+import 'Performance/performance_type.dart';
 
-class Excercise {
-  int id;
-  String name;
-  int level;
-  String category;
-  String equipment;
-  String description;
-  String muscle;
-  String secondaryMuscle;
+enum ExerciseCategory {
+  strength,
+  bodyweight,
+  cardio,
+  stretching,
+  plyometrics,
+  strongman,
+  powerlifting,
+  olympicWeightlifting;
 
-  Excercise(
-    this.id,
-    this.name,
-    this.level,
-    this.category,
-    this.equipment,
-    this.description,
-    this.muscle,
-    this.secondaryMuscle,
-  );
+  bool get requiresWeight {
+    switch (this) {
+      case strength:
+      case strongman:
+      case powerlifting:
+      case olympicWeightlifting:
+        return true;
+      default:
+        return false;
+    }
+  }
+
+  bool get isTimed {
+    switch (this) {
+      case cardio:
+      case stretching:
+        return true;
+      default:
+        return false;
+    }
+  }
+}
+
+enum Equipment {
+  bodyOnly,
+  machine,
+  other,
+  foamRoll,
+  kettlebells,
+  dumbbell,
+  cable,
+  barbell,
+  bands,
+  medicineBall,
+  exerciseBall,
+  eZCurlBar;
+
+  bool get isBodyweight => this == Equipment.bodyOnly;
+
+  static Equipment fromString(String? value) {
+    if (value == null) return Equipment.other;
+    switch (value.toLowerCase().replaceAll(' ', '')) {
+      case 'bodyonly':
+        return Equipment.bodyOnly;
+      case 'machine':
+        return Equipment.machine;
+      case 'foamroll':
+        return Equipment.foamRoll;
+      case 'kettlebells':
+        return Equipment.kettlebells;
+      case 'dumbbell':
+        return Equipment.dumbbell;
+      case 'cable':
+        return Equipment.cable;
+      case 'barbell':
+        return Equipment.barbell;
+      case 'bands':
+        return Equipment.bands;
+      case 'medicineball':
+        return Equipment.medicineBall;
+      case 'exerciseball':
+        return Equipment.exerciseBall;
+      case 'e-zcurlbar':
+        return Equipment.eZCurlBar;
+      default:
+        return Equipment.other;
+    }
+  }
+}
+
+class Exercise {
+  final int id;
+  final String name;
+  final int level;
+  final ExerciseCategory category;
+  final Equipment equipment;
+  final String description;
+  final String muscle;
+  final String secondaryMuscle;
+
+  const Exercise({
+    required this.id,
+    required this.name,
+    required this.level,
+    required this.category,
+    required this.equipment,
+    required this.description,
+    required this.muscle,
+    required this.secondaryMuscle,
+  });
+
+  PerformanceType get performanceType {
+    if (category.isTimed) {
+      return PerformanceType.duration;
+    } else if (category.requiresWeight && !equipment.isBodyweight) {
+      return PerformanceType.weighted;
+    } else {
+      return PerformanceType.bodyweight;
+    }
+  }
 
   @override
   String toString() {
-    return "$id, $name, $level, $description, $muscle, $secondaryMuscle";
-  }
-
-  Excercise copyWith({
-    int? id,
-    String? name,
-    int? level,
-    String? category,
-    String? equipment,
-    String? description,
-    String? primaryMuscle,
-    String? secondaryMuscle,
-  }) {
-    return Excercise(
-      id ?? this.id,
-      name ?? this.name,
-      level ?? this.level,
-      category ?? this.category,
-      equipment ?? this.equipment,
-      description ?? this.description,
-      primaryMuscle ?? this.muscle,
-      secondaryMuscle ?? this.secondaryMuscle,
-    );
+    return "Excercise: $name\nLevel: $level\nDescription: $description\nMuscles: $muscle";
   }
 }
-
-mixin Weight {
-  late double mass;
-}
-
-class WieghtedExcercise extends Excercise with Weight {
-  WieghtedExcercise(
-    int id,
-    String name,
-    int level,
-    String category,
-    String equipment,
-    String description,
-    String muscle,
-    String secondaryMuscle,
-    double mass,
-  ) : super(
-        id,
-        name,
-        level,
-        category,
-        equipment,
-        description,
-        muscle,
-        secondaryMuscle,
-      ) {
-    this.mass = mass;
-  }
-}
-
-// class DurationableExcercise extends Excercise {
-//   double duration = 0.0;
-//   DurationableExcercise(int id, String name, int level, this.duration)
-//     : super(id, name, level);
-// }
-
-// class RepeatableExcercise extends Excercise {
-//   int reps = 0;
-//   int rounds = 0;
-//   RepeatableExcercise(int id, String name, int level, this.reps, this.rounds)
-//     : super(id, name, level);
-// }
-
-// mixin Equipmentable {
-//   late Equipment equipment;
-// }
-
-// class RepeatableEquipmentableExcercise extends RepeatableExcercise
-//     with Equipmentable {
-//   RepeatableEquipmentableExcercise(
-//     int id,
-//     String name,
-//     int level,
-//     int reps,
-//     int rounds,
-//     Equipment equipment,
-//   ) : super(id, name, level, reps, rounds) {
-//     this.equipment = equipment;
-//   }
-// }
-
-// class DurationableEquipmentableExcercise extends DurationableExcercise
-//     with Equipmentable {
-//   DurationableEquipmentableExcercise(
-//     int id,
-//     String name,
-//     int level,
-//     double duration,
-//     Equipment equipment,
-//   ) : super(id, name, level, duration) {
-//     this.equipment = equipment;
-//   }
-// }

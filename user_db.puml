@@ -19,16 +19,16 @@ class UserHistDb {
     + {async} delete: Furute<int>
 }
 
-class ExcerciseDb {
-    - {static} _instance: ExcerciseDb? 
+class ExerciseDb {
+    - {static} _instance: ExerciseDb? 
     - {static} _db: Database? 
     - {final} _assetPath: String 
     - {static} _isInitializing: bool 
 
-    + {static, get} instance: ExcerciseDb
+    + {static, get} instance: ExerciseDb
     + {async, get} database: Future<Database>
 
-    - ExcerciseDb._(assetPath: required String)
+    - ExerciseDb._(assetPath: required String)
     - {async} _initDatabase(): Future<Database> 
     - {async} _copyDatabaseFromAssets(targetPath: String): Future<void>
     + {async} query(table, where, whereArgs, orderBy, limit): Future<List<Map<String, dynamic>>>
@@ -38,8 +38,8 @@ class ExcerciseDb {
 }
 
 UserHistDb ..> UserHistModel
-ExcerciseDb ..> ExcerciseModel 
-ExcerciseDb ..> Excercise
+ExerciseDb ..> ExerciseModel 
+ExerciseDb ..> Excercise
 
 abstract class BaseDBModel {
     + {get} id: int
@@ -61,7 +61,7 @@ class UserHistModel implements BaseDBModel {
     + toDomain(): WorkoutHistory
 }
 
-class ExcerciseModel implements BaseDBModel {
+class ExerciseModel implements BaseDBModel {
     + {final} id: int
     + {final} name: String
     + {final} level: int 
@@ -71,8 +71,8 @@ class ExcerciseModel implements BaseDBModel {
     + {final} primaryMusclesList: String 
     + {final} secondaryMusclesList: String? 
 
-    + ExcerciseModel(id, name, level, category, equipment, description, primaryMusclesList, secondaryMusclesList)
-    + {factory} fromMap(map: Map<String, dynamic>): ExcerciseModel
+    + ExerciseModel(id, name, level, category, equipment, description, primaryMusclesList, secondaryMusclesList)
+    + {factory} fromMap(map: Map<String, dynamic>): ExerciseModel
     + toMap(): Map<String, dynamic>
     + toDomain(): Excercise
 }
@@ -92,10 +92,10 @@ class HistoryRepo implements IHistoryRepo {
     + {async} deleteHistory(id: int): Future<void>
 }
 
-class ExcerciseRepo implements IExcerciseRepo {
-    + {final} _db: ExcerciseDb 
+class ExerciseRepo implements IExerciseRepo {
+    + {final} _db: ExerciseDb 
 
-    + ExcerciseRepo(db)
+    + ExerciseRepo(db)
     + {async} getById(id: int): Future<Excercise?>
     + {async>} getByLevel(level: int): Future<List<Excercise>>
     + {async>} getByCategory(category: String): Future<List<Excercise>>
@@ -105,5 +105,5 @@ class ExcerciseRepo implements IExcerciseRepo {
 }
 
 HistoryRepo *-- UserHistDb
-ExcerciseRepo *-- ExcerciseDb
+ExerciseRepo *-- ExerciseDb
 @enduml
