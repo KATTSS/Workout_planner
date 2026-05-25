@@ -23,12 +23,11 @@ class ManageWorkoutExercises {
   }
 
   Workout reorderExercises(Workout workout, int oldIndex, int newIndex) {
-    if (oldIndex < 0 || oldIndex >= workout.exercises.length) {
+    if (oldIndex < 0 || oldIndex >= workout.exercises.length || newIndex >=workout.exercises.length) {
       throw RangeError('Invalid exercise index');
     }
 
     final updatedExercises = List<ExercisePerformance>.from(workout.exercises);
-    if (oldIndex < newIndex) newIndex -= 1;
     final exercise = updatedExercises.removeAt(oldIndex);
     updatedExercises.insert(newIndex, exercise);
     return workout.copyWith(exercises: updatedExercises);
