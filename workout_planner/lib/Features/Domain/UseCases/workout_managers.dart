@@ -34,11 +34,11 @@ class WorkoutManager {
   }
 
   void setDateTime(DateTime workoutDate) {
-    this._workoutDate = workoutDate;
+    _workoutDate = workoutDate;
   }
 
   void changeDateTime(DateTime workoutDate) {
-    this._workoutDate = workoutDate;
+    _workoutDate = workoutDate;
   }
 
   void changeExcercise(Exercise oldExcercise, Exercise newExcercise) {

@@ -114,7 +114,7 @@ class WorkoutSession {
     try {
       final updatedWorkout = operation();
       _stateManager.updateState(updatedWorkout);
-    } on WorkoutValidationException catch (e) {
+    } on WorkoutValidationException {
       rethrow;
     }
   }

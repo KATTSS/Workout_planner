@@ -10,7 +10,7 @@ class SetData {
   bool isValidFor(PerformanceType type) {
     switch (type) {
       case PerformanceType.weighted:
-        return weight != null && weight! > 0 && reps != null && reps! > 0;
+        return weight != null && weight! >= 0 && reps != null && reps! > 0;
       case PerformanceType.bodyweight:
         return reps != null && reps! > 0;
       case PerformanceType.duration:
