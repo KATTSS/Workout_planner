@@ -12,13 +12,12 @@ class SetData {
       case PerformanceType.weighted:
         return weight != null && weight! >= 0 && reps != null && reps! > 0;
       case PerformanceType.bodyweight:
-        return reps != null && reps! > 0;
+        return reps != null && reps! > 0 && weight == null;
       case PerformanceType.duration:
         return duration != null && duration! > 0;
     }
   }
 
-  // Фабричные конструкторы для разных типов
   factory SetData.weighted({required double weight, required int reps}) {
     return SetData(weight: weight, reps: reps);
   }

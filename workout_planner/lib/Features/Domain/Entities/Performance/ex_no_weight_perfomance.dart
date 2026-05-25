@@ -10,8 +10,15 @@ class BodyweightExercisePerformance extends ExercisePerformance {
     required super.exerciseId,
     required super.exercise,
     required List<SetData> sets,
-  }) : _sets = sets,
-       assert(sets.every((s) => s.isValidFor(PerformanceType.bodyweight)));
+  }) : _sets = sets {
+    for (var set in sets) {
+      if (!set.isValidFor(PerformanceType.bodyweight)) {
+        throw ArgumentError(
+          'Invalid set data for bodyweight exercise: reps must be > 0',
+        );
+      }
+    }
+  }
 
   @override
   int get setsCount => _sets.length;

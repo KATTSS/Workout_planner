@@ -10,8 +10,15 @@ class DurationExercisePerformance extends ExercisePerformance {
     required super.exerciseId,
     required super.exercise,
     required List<SetData> sets,
-  }) : _sets = sets,
-       assert(sets.every((s) => s.isValidFor(PerformanceType.duration)));
+  }) : _sets = sets {
+    for (var set in sets) {
+      if (!set.isValidFor(PerformanceType.duration)) {
+        throw ArgumentError(
+          'Invalid set data for duration exercise: duration must be > 0',
+        );
+      }
+    }
+  }
 
   @override
   int get setsCount => _sets.length;
@@ -26,7 +33,7 @@ class DurationExercisePerformance extends ExercisePerformance {
   int? getRepsForSet(int setIndex) => null;
 
   @override
-  double? getDurationForSet(int setIndex) => 
+  double? getDurationForSet(int setIndex) =>
       setIndex < _sets.length ? _sets[setIndex].duration : null;
 
   List<double> get durations => _sets.map((s) => s.duration!).toList();
@@ -66,10 +73,10 @@ class DurationExercisePerformance extends ExercisePerformance {
     if (!newSet.isValidFor(PerformanceType.duration)) {
       throw ArgumentError('Invalid set data for duration exercise');
     }
-    
+
     final updatedSets = List<SetData>.from(_sets);
     updatedSets[setIndex] = newSet;
-    
+
     return DurationExercisePerformance(
       exerciseId: exerciseId,
       exercise: exercise,
@@ -82,7 +89,7 @@ class DurationExercisePerformance extends ExercisePerformance {
     if (setIndex < 0 || setIndex >= _sets.length) {
       throw RangeError.index(setIndex, _sets);
     }
-    
+
     final updatedSet = SetData.duration(duration: duration);
     return updateSet(setIndex, updatedSet);
   }
