@@ -1,5 +1,4 @@
 import 'package:workout_planner/Features/Domain/Entities/Performance/ex_perfomance.dart';
-import 'package:workout_planner/Features/Domain/Entities/Performance/set_data.dart';
 
 class Workout {
   final int id;
