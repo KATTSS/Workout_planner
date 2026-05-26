@@ -55,7 +55,7 @@ class HistoryRepo implements IHistoryRepo {
   }
 
   @override
-  Future<int> updateWorkout(Workout workout) async {
+  Future<void> updateWorkout(Workout workout) async {
     await _workoutDataSource.updateWorkout(
       workout.id,
       WorkoutMapper.toModel(workout).toMap(),
@@ -66,7 +66,7 @@ class HistoryRepo implements IHistoryRepo {
 
     await _saveExercisesData(workout);
 
-    return workout.id;
+    // return workout.id;
   }
 
   Future<List<ExercisePerformance>> _getWorkoutExercises(int workoutId) async {
