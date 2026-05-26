@@ -45,7 +45,7 @@ class WorkoutBuilder {
 
   Workout build() {
     assert(_date != null, 'Date must be set');
-    assert(_exercises.isNotEmpty, 'At least one exercise is required');
+    //assert(_exercises.isNotEmpty, 'At least one exercise is required');
 
     _creationId += 1;
 
@@ -60,8 +60,10 @@ class WorkoutBuilder {
 
   Workout buildFromTemplate(Workout template, DateTime newDate) {
     _date = newDate;
+    _exercises.clear();
     _exercises.addAll(template.exercises);
     _notes = template.notes;
+    _isDraft = !template.isCompleted;
     return build();
   }
 }

@@ -5,226 +5,187 @@ import 'package:workout_planner/Features/Domain/Entities/Performance/set_data.da
 import 'package:workout_planner/Features/Application/Workout/workout_session.dart';
 
 class WorkoutSessionState {
-  final WorkoutSession? session;
-  final bool isLoading;
+  final Workout? workout;
+  final bool canUndo;
+  final bool canRedo;
   final String? errorMessage;
-  final int updateVersion; 
 
   const WorkoutSessionState({
-    this.session,
-    this.isLoading = false,
+    this.workout,
+    this.canUndo = false,
+    this.canRedo = false,
     this.errorMessage,
-    this.updateVersion = 0, // Изначально 0
   });
 
   WorkoutSessionState copyWith({
-    WorkoutSession? session,
-    bool? isLoading,
+    Workout? workout,
+    bool? canUndo,
+    bool? canRedo,
     String? errorMessage,
-    int? updateVersion,
   }) {
     return WorkoutSessionState(
-      session: session ?? this.session,
-      isLoading: isLoading ?? this.isLoading,
+      workout: workout ?? this.workout,
+      canUndo: canUndo ?? this.canUndo,
+      canRedo: canRedo ?? this.canRedo,
       errorMessage: errorMessage,
-      // Если updateVersion не передан явно, увеличиваем текущий на 1 при изменении сессии
-      updateVersion:
-          updateVersion ??
-          (session != null ? this.updateVersion + 1 : this.updateVersion),
     );
   }
 }
 
 class WorkoutSessionNotifier extends StateNotifier<WorkoutSessionState> {
+  WorkoutSession? _session;
+
   WorkoutSessionNotifier() : super(const WorkoutSessionState());
 
   void startNewWorkout(Workout initialWorkout) {
-    state = WorkoutSessionState(
-      // Сбрасываем версию при старте
-      session: WorkoutSession(initialWorkout),
-    );
+    _session = WorkoutSession(initialWorkout);
+    _updateState();
   }
 
   void startExistingWorkout(Workout workout) {
-    state = WorkoutSessionState(session: WorkoutSession(workout));
+    _session = WorkoutSession(workout);
+    _updateState();
+  }
+
+  void _updateState({String? error}) {
+    if (_session == null) return;
+    
+    state = WorkoutSessionState(
+      workout: _session!.currentWorkout,
+      canUndo: _session!.canUndo,
+      canRedo: _session!.canRedo, // Исправлено: ранее вызывался redo()
+      errorMessage: error,
+    );
   }
 
   void addExercise(ExercisePerformance exercise) {
-    final session = state.session;
-    if (session == null) return;
-
     try {
-      session.addExercise(exercise);
-      // Явно увеличиваем версию, чтобы state изменился для Riverpod
-      state = state.copyWith(
-        session: session,
-        updateVersion: state.updateVersion + 1,
-        errorMessage: null,
-      );
+      _session?.addExercise(exercise);
+      _updateState();
     } catch (e) {
-      state = state.copyWith(errorMessage: e.toString());
+      _updateState(error: e.toString());
     }
   }
 
   void removeExercise(int exerciseId) {
-    final session = state.session;
-    if (session == null) return;
-
     try {
-      session.removeExercise(exerciseId);
-      state = state.copyWith(
-        session: session,
-        updateVersion: state.updateVersion + 1,
-        errorMessage: null,
-      );
+      _session?.removeExercise(exerciseId);
+      _updateState();
     } catch (e) {
-      state = state.copyWith(errorMessage: e.toString());
+      _updateState(error: e.toString());
     }
   }
 
   void addSetToExercise(int exerciseId, SetData set) {
-    final session = state.session;
-    if (session == null) return;
-
     try {
-      session.addSetToExercise(exerciseId, set);
-      state = state.copyWith(
-        session: session,
-        updateVersion: state.updateVersion + 1,
-        errorMessage: null,
-      );
+      _session?.addSetToExercise(exerciseId, set);
+      _updateState();
     } catch (e) {
-      state = state.copyWith(errorMessage: e.toString());
+      _updateState(error: e.toString());
     }
   }
 
   void removeSetFromExercise(int exerciseId, int setIndex) {
-    final session = state.session;
-    if (session == null) return;
-
     try {
-      session.removeSetFromExercise(exerciseId, setIndex);
-      state = state.copyWith(
-        session: session,
-        updateVersion: state.updateVersion + 1,
-        errorMessage: null,
-      );
+      _session?.removeSetFromExercise(exerciseId, setIndex);
+      _updateState();
     } catch (e) {
-      state = state.copyWith(errorMessage: e.toString());
+      _updateState(error: e.toString());
     }
   }
 
   void updateSetInExercise(int exerciseId, int setIndex, SetData newSet) {
-    final session = state.session;
-    if (session == null) return;
-
     try {
-      session.updateSetInExercise(exerciseId, setIndex, newSet);
-      state = state.copyWith(
-        session: session,
-        updateVersion: state.updateVersion + 1,
-        errorMessage: null,
-      );
+      _session?.updateSetInExercise(exerciseId, setIndex, newSet);
+      _updateState();
     } catch (e) {
-      state = state.copyWith(errorMessage: e.toString());
+      _updateState(error: e.toString());
     }
   }
 
   void updateDate(DateTime newDate) {
-    final session = state.session;
-    if (session == null) return;
-
     try {
-      session.updateDate(newDate);
-      state = state.copyWith(
-        session: session,
-        updateVersion: state.updateVersion + 1,
-        errorMessage: null,
-      );
+      _session?.updateDate(newDate);
+      _updateState();
     } catch (e) {
-      state = state.copyWith(errorMessage: e.toString());
+      _updateState(error: e.toString());
     }
   }
 
   void updateNotes(String? notes) {
-    final session = state.session;
-    if (session == null) return;
-
     try {
-      session.updateNotes(notes);
-      state = state.copyWith(
-        session: session,
-        updateVersion: state.updateVersion + 1,
-        errorMessage: null,
-      );
+      _session?.updateNotes(notes);
+      _updateState();
     } catch (e) {
-      state = state.copyWith(errorMessage: e.toString());
-    }
-  }
-
-  void completeWorkout() {
-    final session = state.session;
-    if (session == null) return;
-
-    try {
-      session.completeWorkout();
-      state = state.copyWith(
-        session: session,
-        updateVersion: state.updateVersion + 1,
-        errorMessage: null,
-      );
-    } catch (e) {
-      state = state.copyWith(errorMessage: e.toString());
+      _updateState(error: e.toString());
     }
   }
 
   void undo() {
-    final session = state.session;
-    if (session == null) return;
-
-    session.undo();
-    state = state.copyWith(
-      session: session,
-      updateVersion: state.updateVersion + 1,
-    );
+    try {
+      _session?.undo();
+      _updateState();
+    } catch (e) {
+      _updateState(error: e.toString());
+    }
   }
 
   void redo() {
-    final session = state.session;
-    if (session == null) return;
-
-    session.redo();
-    state = state.copyWith(
-      session: session,
-      updateVersion: state.updateVersion + 1,
-    );
+    try {
+      _session?.redo();
+      _updateState();
+    } catch (e) {
+      _updateState(error: e.toString());
+    }
   }
 
+  void completeWorkout() {
+    try {
+      _session?.completeWorkout();
+      _updateState();
+    } catch (e) {
+      _updateState(error: e.toString());
+    }
+  }
+  
   void reset() {
+    _session = null;
     state = const WorkoutSessionState();
   }
 }
+// import 'package:flutter_riverpod/flutter_riverpod.dart';
+// import 'package:workout_planner/Features/Domain/Entities/Workout/workout.dart';
+// import 'package:workout_planner/Features/Domain/Entities/Performance/ex_perfomance.dart';
+// import 'package:workout_planner/Features/Domain/Entities/Performance/set_data.dart';
+// import 'package:workout_planner/Features/Application/Workout/workout_session.dart';
 
 // class WorkoutSessionState {
 //   final WorkoutSession? session;
 //   final bool isLoading;
 //   final String? errorMessage;
+//   final int updateVersion;
 
 //   const WorkoutSessionState({
 //     this.session,
 //     this.isLoading = false,
 //     this.errorMessage,
+//     this.updateVersion = 0, // Изначально 0
 //   });
 
 //   WorkoutSessionState copyWith({
 //     WorkoutSession? session,
 //     bool? isLoading,
 //     String? errorMessage,
+//     int? updateVersion,
 //   }) {
 //     return WorkoutSessionState(
 //       session: session ?? this.session,
 //       isLoading: isLoading ?? this.isLoading,
 //       errorMessage: errorMessage,
+//       // Если updateVersion не передан явно, увеличиваем текущий на 1 при изменении сессии
+//       updateVersion:
+//           updateVersion ??
+//           (session != null ? this.updateVersion + 1 : this.updateVersion),
 //     );
 //   }
 // }
@@ -233,17 +194,14 @@ class WorkoutSessionNotifier extends StateNotifier<WorkoutSessionState> {
 //   WorkoutSessionNotifier() : super(const WorkoutSessionState());
 
 //   void startNewWorkout(Workout initialWorkout) {
-//     state = state.copyWith(
+//     state = WorkoutSessionState(
+//       // Сбрасываем версию при старте
 //       session: WorkoutSession(initialWorkout),
-//       errorMessage: null,
 //     );
 //   }
 
 //   void startExistingWorkout(Workout workout) {
-//     state = state.copyWith(
-//       session: WorkoutSession(workout),
-//       errorMessage: null,
-//     );
+//     state = WorkoutSessionState(session: WorkoutSession(workout));
 //   }
 
 //   void addExercise(ExercisePerformance exercise) {
@@ -252,7 +210,12 @@ class WorkoutSessionNotifier extends StateNotifier<WorkoutSessionState> {
 
 //     try {
 //       session.addExercise(exercise);
-//       state = state.copyWith(session: session, errorMessage: null);
+//       // Явно увеличиваем версию, чтобы state изменился для Riverpod
+//       state = state.copyWith(
+//         session: session,
+//         updateVersion: state.updateVersion + 1,
+//         errorMessage: null,
+//       );
 //     } catch (e) {
 //       state = state.copyWith(errorMessage: e.toString());
 //     }
@@ -264,7 +227,11 @@ class WorkoutSessionNotifier extends StateNotifier<WorkoutSessionState> {
 
 //     try {
 //       session.removeExercise(exerciseId);
-//       state = state.copyWith(session: session, errorMessage: null);
+//       state = state.copyWith(
+//         session: session,
+//         updateVersion: state.updateVersion + 1,
+//         errorMessage: null,
+//       );
 //     } catch (e) {
 //       state = state.copyWith(errorMessage: e.toString());
 //     }
@@ -276,7 +243,11 @@ class WorkoutSessionNotifier extends StateNotifier<WorkoutSessionState> {
 
 //     try {
 //       session.addSetToExercise(exerciseId, set);
-//       state = state.copyWith(session: session, errorMessage: null);
+//       state = state.copyWith(
+//         session: session,
+//         updateVersion: state.updateVersion + 1,
+//         errorMessage: null,
+//       );
 //     } catch (e) {
 //       state = state.copyWith(errorMessage: e.toString());
 //     }
@@ -288,19 +259,27 @@ class WorkoutSessionNotifier extends StateNotifier<WorkoutSessionState> {
 
 //     try {
 //       session.removeSetFromExercise(exerciseId, setIndex);
-//       state = state.copyWith(session: session, errorMessage: null);
+//       state = state.copyWith(
+//         session: session,
+//         updateVersion: state.updateVersion + 1,
+//         errorMessage: null,
+//       );
 //     } catch (e) {
 //       state = state.copyWith(errorMessage: e.toString());
 //     }
 //   }
 
-//  void updateSetInExercise(int exerciseId, int setIndex, SetData newSet) {
+//   void updateSetInExercise(int exerciseId, int setIndex, SetData newSet) {
 //     final session = state.session;
 //     if (session == null) return;
 
 //     try {
 //       session.updateSetInExercise(exerciseId, setIndex, newSet);
-//       state = state.copyWith(session: session, errorMessage: null);
+//       state = state.copyWith(
+//         session: session,
+//         updateVersion: state.updateVersion + 1,
+//         errorMessage: null,
+//       );
 //     } catch (e) {
 //       state = state.copyWith(errorMessage: e.toString());
 //     }
@@ -312,7 +291,11 @@ class WorkoutSessionNotifier extends StateNotifier<WorkoutSessionState> {
 
 //     try {
 //       session.updateDate(newDate);
-//       state = state.copyWith(session: session, errorMessage: null);
+//       state = state.copyWith(
+//         session: session,
+//         updateVersion: state.updateVersion + 1,
+//         errorMessage: null,
+//       );
 //     } catch (e) {
 //       state = state.copyWith(errorMessage: e.toString());
 //     }
@@ -324,7 +307,11 @@ class WorkoutSessionNotifier extends StateNotifier<WorkoutSessionState> {
 
 //     try {
 //       session.updateNotes(notes);
-//       state = state.copyWith(session: session, errorMessage: null);
+//       state = state.copyWith(
+//         session: session,
+//         updateVersion: state.updateVersion + 1,
+//         errorMessage: null,
+//       );
 //     } catch (e) {
 //       state = state.copyWith(errorMessage: e.toString());
 //     }
@@ -336,7 +323,11 @@ class WorkoutSessionNotifier extends StateNotifier<WorkoutSessionState> {
 
 //     try {
 //       session.completeWorkout();
-//       state = state.copyWith(session: session, errorMessage: null);
+//       state = state.copyWith(
+//         session: session,
+//         updateVersion: state.updateVersion + 1,
+//         errorMessage: null,
+//       );
 //     } catch (e) {
 //       state = state.copyWith(errorMessage: e.toString());
 //     }
@@ -347,7 +338,10 @@ class WorkoutSessionNotifier extends StateNotifier<WorkoutSessionState> {
 //     if (session == null) return;
 
 //     session.undo();
-//     state = state.copyWith(session: session);
+//     state = state.copyWith(
+//       session: session,
+//       updateVersion: state.updateVersion + 1,
+//     );
 //   }
 
 //   void redo() {
@@ -355,7 +349,10 @@ class WorkoutSessionNotifier extends StateNotifier<WorkoutSessionState> {
 //     if (session == null) return;
 
 //     session.redo();
-//     state = state.copyWith(session: session);
+//     state = state.copyWith(
+//       session: session,
+//       updateVersion: state.updateVersion + 1,
+//     );
 //   }
 
 //   void reset() {
