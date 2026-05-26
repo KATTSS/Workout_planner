@@ -2,6 +2,7 @@ import 'package:workout_planner/Features/Domain/Entities/Performance/ex_perfoman
 import 'package:workout_planner/Features/Domain/Entities/Performance/ex_visitor.dart';
 import 'package:workout_planner/Features/Domain/Entities/Performance/set_data.dart';
 import 'package:workout_planner/Features/Domain/Entities/Performance/performance_type.dart';
+import 'package:collection/collection.dart';
 
 class BodyweightExercisePerformance extends ExercisePerformance {
   final List<SetData> _sets;
@@ -110,4 +111,16 @@ class BodyweightExercisePerformance extends ExercisePerformance {
   T accept<T>(ExercisePerformanceVisitor<T> visitor) {
     return visitor.visitBodyweight(this);
   }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is BodyweightExercisePerformance &&
+        other.exerciseId == exerciseId &&
+        other.exercise == exercise &&
+        const ListEquality().equals(other._sets, _sets);
+  }
+
+  @override
+  int get hashCode => Object.hash(exerciseId, exercise, Object.hashAll(_sets));
 }
