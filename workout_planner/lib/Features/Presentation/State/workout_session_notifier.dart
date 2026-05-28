@@ -49,11 +49,11 @@ class WorkoutSessionNotifier extends StateNotifier<WorkoutSessionState> {
 
   void _updateState({String? error}) {
     if (_session == null) return;
-    
+
     state = WorkoutSessionState(
       workout: _session!.currentWorkout,
       canUndo: _session!.canUndo,
-      canRedo: _session!.canRedo, // Исправлено: ранее вызывался redo()
+      canRedo: _session!.canRedo,
       errorMessage: error,
     );
   }
@@ -67,14 +67,28 @@ class WorkoutSessionNotifier extends StateNotifier<WorkoutSessionState> {
     }
   }
 
+  bool get isNewWorkout => _session?.currentWorkout.id == -1;
+
   void removeExercise(int exerciseId) {
+    final session = _session;
+    if (session == null) return;
+
     try {
-      _session?.removeExercise(exerciseId);
+      session.removeExercise(exerciseId);
       _updateState();
     } catch (e) {
-      _updateState(error: e.toString());
+      state = state.copyWith(errorMessage: e.toString());
     }
   }
+
+  // void removeExercise(int exerciseId) {
+  //   try {
+  //     _session?.removeExercise(exerciseId);
+  //     _updateState();
+  //   } catch (e) {
+  //     _updateState(error: e.toString());
+  //   }
+  // }
 
   void addSetToExercise(int exerciseId, SetData set) {
     try {
@@ -147,7 +161,7 @@ class WorkoutSessionNotifier extends StateNotifier<WorkoutSessionState> {
       _updateState(error: e.toString());
     }
   }
-  
+
   void reset() {
     _session = null;
     state = const WorkoutSessionState();

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:workout_planner/Features/Domain/Entities/excercise.dart';
 import 'package:workout_planner/Features/Domain/Entities/Performance/ex_perfomance.dart';
 import 'package:workout_planner/Features/Domain/Entities/Performance/set_data.dart';

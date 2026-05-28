@@ -17,12 +17,11 @@ class CreateWorkout {
 
 class SaveWorkout {
   final IHistoryRepo _historyRepo;
-
   SaveWorkout(this._historyRepo);
 
   Future<int> call(Workout workout) async {
     if (workout.exercises.isEmpty) {
-      throw WorkoutValidationException('Cannot save empty workout');
+      throw WorkoutValidationException('Тренировка не может быть пустой. Используйте удаление, если хотите полностью стереть её.');
     }
     return _historyRepo.saveWorkout(workout);
   }

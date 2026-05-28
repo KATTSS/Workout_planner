@@ -7,11 +7,11 @@ import 'package:workout_planner/Features/Domain/Entities/Performance/set_data.da
 import 'package:workout_planner/Features/Application/Workout/workout_builder.dart';
 import 'package:workout_planner/Features/Presentation/Providers/history_providers.dart';
 import 'package:workout_planner/Features/Presentation/Widgets/exercise_editor_card.dart';
-import 'package:workout_planner/Features/Presentation/Routing/app_router.dart';
 import 'package:workout_planner/Features/Domain/UseCases/Workout/providers.dart';
 import 'package:workout_planner/Features/Domain/Entities/Performance/performance_type.dart';
 import 'package:workout_planner/Features/Presentation/Providers/workout_session_provider.dart';
 import 'package:workout_planner/Features/Presentation/State/workout_session_notifier.dart';
+import 'package:workout_planner/Features/Presentation/Screens/exercise_selection_screen.dart';
 
 class WorkoutEditorScreen extends ConsumerStatefulWidget {
   final int? existingWorkoutId;
@@ -47,12 +47,9 @@ class _WorkoutEditorScreenState extends ConsumerState<WorkoutEditorScreen> {
     try {
       if (widget.existingWorkoutId != null) {
         debugPrint('=== LOADING WORKOUT ===');
-
-        // ПРАВИЛЬНЫЙ СПОСОБ: Используем ref.read с .future
         final workout = await ref.read(
           workoutByIdProvider(widget.existingWorkoutId!).future,
         );
-
         debugPrint('Workout loaded: ${workout?.id}');
 
         if (mounted && workout != null) {
@@ -66,7 +63,9 @@ class _WorkoutEditorScreenState extends ConsumerState<WorkoutEditorScreen> {
         }
       } else {
         debugPrint('=== CREATING NEW WORKOUT ===');
+        // ✅ Исправлено: используем id = -1 для новых тренировок
         final workout = WorkoutBuilder()
+            .setId(1234) // Используем -1 для новых тренировок
             .setDate(_selectedDate)
             .addExercises([])
             .setNotes('')
@@ -93,7 +92,6 @@ class _WorkoutEditorScreenState extends ConsumerState<WorkoutEditorScreen> {
   @override
   void dispose() {
     _notesController.dispose();
-    // Сбрасываем сессию при закрытии
     ref.read(workoutSessionProvider.notifier).reset();
     super.dispose();
   }
@@ -101,8 +99,9 @@ class _WorkoutEditorScreenState extends ConsumerState<WorkoutEditorScreen> {
   Future<void> _addExercise() async {
     if (!mounted) return;
 
-    final result = await context.push<ExercisePerformance>(
-      AppRouter.exerciseSelection,
+    final result = await Navigator.push<ExercisePerformance>(
+      context,
+      MaterialPageRoute(builder: (context) => const ExerciseSelectionScreen()),
     );
 
     if (result != null && mounted) {
@@ -156,11 +155,86 @@ class _WorkoutEditorScreenState extends ConsumerState<WorkoutEditorScreen> {
     }
   }
 
+  Future<void> _deleteWorkout() async {
+    if (!mounted) return;
+    debugPrint('Delete workout triggered for ID: ${widget.existingWorkoutId}');
+
+    // Показываем диалог подтверждения
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Workout'),
+        content: const Text('Are you sure you want to delete this workout?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && mounted) {
+      // TODO: Реализовать удаление
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Delete feature coming soon')),
+      );
+    }
+  }
+
+  Widget _buildEmptyStatePlaceholder(BuildContext context, bool isNew) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.fitness_center, size: 48, color: Colors.grey),
+            const SizedBox(height: 16),
+            const Text(
+              'No exercises in this workout.',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Tap the button below to add your first exercise.',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.grey),
+            ),
+            const SizedBox(height: 24),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                TextButton(
+                  onPressed: () => context.pop(),
+                  child: const Text('Cancel'),
+                ),
+                const SizedBox(width: 16),
+                ElevatedButton.icon(
+                  onPressed: _addExercise,
+                  icon: const Icon(Icons.add),
+                  label: const Text('Add Exercise'),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final stateValue = ref.watch(workoutSessionProvider);
+    final hasExercises = stateValue.workout?.exercises.isNotEmpty ?? false;
+    final isNew = ref.read(workoutSessionProvider.notifier).isNewWorkout;
 
-    // Отслеживаем ошибки
+    // Отслеживаем ошибки во время сессии
     ref.listen<WorkoutSessionState>(workoutSessionProvider, (previous, next) {
       if (next.errorMessage != null && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -172,7 +246,7 @@ class _WorkoutEditorScreenState extends ConsumerState<WorkoutEditorScreen> {
       }
     });
 
-    // Показываем ошибку, если она есть
+    // Экран критической ошибки инициализации
     if (_errorMessage != null) {
       return Scaffold(
         appBar: AppBar(
@@ -220,22 +294,13 @@ class _WorkoutEditorScreenState extends ConsumerState<WorkoutEditorScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          widget.existingWorkoutId != null ? 'Edit Workout' : 'New Workout',
+          widget.existingWorkoutId == null ? 'New Workout' : 'Edit Workout',
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.undo),
-            onPressed: stateValue.canUndo
-                ? () => ref.read(workoutSessionProvider.notifier).undo()
-                : null,
+            icon: const Icon(Icons.check),
+            onPressed: hasExercises ? _saveWorkout : null,
           ),
-          IconButton(
-            icon: const Icon(Icons.redo),
-            onPressed: stateValue.canRedo
-                ? () => ref.read(workoutSessionProvider.notifier).redo()
-                : null,
-          ),
-          IconButton(icon: const Icon(Icons.save), onPressed: _saveWorkout),
         ],
       ),
       body: stateValue.workout == null
@@ -272,23 +337,19 @@ class _WorkoutEditorScreenState extends ConsumerState<WorkoutEditorScreen> {
                     ],
                   ),
                 ),
+                if (stateValue.errorMessage != null)
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Text(
+                      stateValue.errorMessage!,
+                      style: const TextStyle(color: Colors.red),
+                    ),
+                  ),
                 const Divider(),
                 Expanded(
+                  // ✅ Важно: используем Expanded для заполнения пространства
                   child: stateValue.workout!.exercises.isEmpty
-                      ? Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const Text('No exercises added yet'),
-                              const SizedBox(height: 16),
-                              ElevatedButton.icon(
-                                onPressed: _addExercise,
-                                icon: const Icon(Icons.add),
-                                label: const Text('Add Exercise'),
-                              ),
-                            ],
-                          ),
-                        )
+                      ? _buildEmptyStatePlaceholder(context, isNew)
                       : ListView.builder(
                           itemCount: stateValue.workout!.exercises.length,
                           itemBuilder: (context, index) {
@@ -332,15 +393,14 @@ class _WorkoutEditorScreenState extends ConsumerState<WorkoutEditorScreen> {
                           },
                         ),
                 ),
-                if (stateValue.workout!.exercises.isNotEmpty)
-                  Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: ElevatedButton.icon(
-                      onPressed: _addExercise,
-                      icon: const Icon(Icons.add),
-                      label: const Text('Add Exercise'),
-                    ),
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: ElevatedButton.icon(
+                    onPressed: _addExercise,
+                    icon: const Icon(Icons.add),
+                    label: const Text('Add Exercise'),
                   ),
+                ),
               ],
             ),
     );

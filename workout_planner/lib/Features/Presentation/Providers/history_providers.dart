@@ -18,7 +18,7 @@ final recentWorkoutsProvider = FutureProvider<List<Workout>>((ref) async {
 //   return getHistory.getRecentWorkouts(limit: 20);
 // });
 
-final workoutByIdProvider = FutureProvider.family<Workout?, int>((
+final workoutByIdProvider = FutureProvider.autoDispose.family<Workout?, int>((
   ref,
   id,
 ) async {
