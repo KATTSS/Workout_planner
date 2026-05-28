@@ -135,7 +135,25 @@ class _ExerciseCatalogScreenState extends ConsumerState<ExerciseCatalogScreen> {
 
   Widget _buildFiltersPanel() {
     final filters = ref.watch(exerciseFiltersProvider);
-    final muscleGroups = ['Chest', 'Back', 'Legs', 'Shoulders', 'Arms', 'Core'];
+    final muscleGroups = [
+      'abdominals',
+      'hamstrings',
+      'adductors',
+      'quadriceps',
+      'biceps',
+      'shoulders',
+      'chest',
+      'middle back',
+      'calves',
+      'glutes',
+      'lower back',
+      'lats',
+      'triceps',
+      'traps',
+      'forearms',
+      'neck',
+      'abductors',
+    ];
     final difficulties = ['Beginner', 'Intermediate', 'Advanced'];
 
     return Container(
