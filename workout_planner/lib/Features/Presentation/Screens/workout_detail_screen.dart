@@ -1,200 +1,379 @@
+// lib/Features/Presentation/screens/workout_detail_screen.dart
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
+import 'package:workout_planner/Features/Application/Providers/workout_providers.dart';
 import 'package:workout_planner/Features/Domain/Entities/Workout/workout.dart';
-import 'package:workout_planner/Features/Presentation/Providers/history_providers.dart';
-import 'package:workout_planner/Features/Presentation/Routing/app_router.dart';
-import 'package:workout_planner/Features/Domain/Entities/Performance/performance_type.dart';
-import 'package:workout_planner/Features/Domain/Entities/Performance/set_data.dart';
+import 'package:workout_planner/Features/Presentation/Screens/exercise_catalog_screen.dart';
+import 'package:workout_planner/Features/Presentation/Screens/exercise_detail_screen.dart';
+import 'package:workout_planner/Features/Presentation/Widgets/exercise_perfomance_widget.dart';
 
-class WorkoutDetailScreen extends ConsumerWidget {
-  final int workoutId;
+class WorkoutDetailScreen extends ConsumerStatefulWidget {
+  final Workout workout;
 
-  const WorkoutDetailScreen({
-    super.key,
-    required this.workoutId,
-  });
+  const WorkoutDetailScreen({super.key, required this.workout});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final workoutAsync = ref.watch(workoutByIdProvider(workoutId));
-    final theme = Theme.of(context);
+  ConsumerState<WorkoutDetailScreen> createState() =>
+      _WorkoutDetailScreenState();
+}
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Workout Details'),
+class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
+  late bool _isEditing;
+  late TextEditingController _notesController;
+  late DateTime _selectedDate;
+
+  @override
+  void initState() {
+    super.initState();
+    _isEditing = false;
+    _notesController = TextEditingController(text: widget.workout.notes);
+    _selectedDate = widget.workout.date;
+
+    // Загружаем тренировку в сессию
+    Future.microtask(() {
+      ref.read(workoutSessionProvider.notifier).loadWorkout(widget.workout);
+    });
+  }
+
+  @override
+  void dispose() {
+    _notesController.dispose();
+    super.dispose();
+  }
+
+  String _getMainMuscleGroup() {
+    final workout = ref.read(workoutSessionProvider).session?.currentWorkout;
+    if (workout == null) return 'None';
+
+    final muscleGroups = <String, int>{};
+    for (final exPerf in workout.exercises) {
+      final group = exPerf.exercise.muscle ?? 'Other';
+      muscleGroups[group] = (muscleGroups[group] ?? 0) + 1;
+    }
+    if (muscleGroups.isEmpty) return 'None';
+    return muscleGroups.entries.reduce((a, b) => a.value > b.value ? a : b).key;
+  }
+
+  Future<void> _saveWorkout() async {
+    final session = ref.read(workoutSessionProvider).session;
+    if (session == null) return;
+
+    final saveWorkout = ref.read(saveWorkoutProvider);
+    final currentWorkout = session.currentWorkout;
+
+    try {
+      await saveWorkout(currentWorkout);
+      session.markAsSaved();
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Workout saved')));
+        setState(() => _isEditing = false);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: $e')));
+      }
+    }
+  }
+
+  Future<void> _deleteWorkout() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Workout'),
+        content: const Text('Are you sure you want to delete this workout?'),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.edit),
-            onPressed: () {
-              context.push(
-                AppRouter.workoutEditor,
-                extra: {'workoutId': workoutId},
-              );
-            },
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Delete'),
           ),
         ],
       ),
-      body: workoutAsync.when(
-        data: (workout) {
-          if (workout == null) {
-            return const Center(child: Text('Workout not found'));
-          }
-          return _WorkoutDetailContent(workout: workout);
-        },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stack) => Center(child: Text('Error: $error')),
-      ),
     );
+
+    if (confirmed == true) {
+      final deleteWorkout = ref.read(deleteWorkoutProvider);
+      final workoutId = widget.workout.id;
+      if (workoutId != null) {
+        await deleteWorkout(workoutId);
+        if (mounted) {
+          Navigator.pop(context);
+        }
+      }
+    }
   }
-}
-
-class _WorkoutDetailContent extends StatelessWidget {
-  final Workout workout;
-
-  const _WorkoutDetailContent({required this.workout});
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final sessionState = ref.watch(workoutSessionProvider);
+    final session = sessionState.session;
+    final workout = session?.currentWorkout;
+    final error = sessionState.error;
+    final hasUnsavedChanges = sessionState.hasUnsavedChanges;
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Заголовок
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Text(
-                        workout.date.toString().split(' ')[0],
-                        style: theme.textTheme.headlineSmall,
-                      ),
-                      const Spacer(),
-                      Chip(
-                        label: Text(
-                          workout.isCompleted ? 'Completed' : 'Draft',
-                        ),
-                        backgroundColor: workout.isCompleted
-                            ? Colors.green.shade100
-                            : Colors.orange.shade100,
-                      ),
-                    ],
-                  ),
-                  if (workout.notes != null && workout.notes!.isNotEmpty) ...[
-                    const SizedBox(height: 8),
-                    Text(
-                      workout.notes!,
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        fontStyle: FontStyle.italic,
-                      ),
-                    ),
-                  ],
-                  const SizedBox(height: 8),
-                  Text(
-                    '${workout.exerciseCount} exercises • ${workout.totalSets} sets',
-                    style: theme.textTheme.bodySmall,
-                  ),
-                ],
-              ),
+    if (workout == null) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(_isEditing ? 'Edit Workout' : 'Workout Details'),
+        actions: [
+          if (_isEditing) ...[
+            IconButton(
+              icon: const Icon(Icons.undo),
+              onPressed: session?.canUndo == true
+                  ? () => ref.read(workoutSessionProvider.notifier).undo()
+                  : null,
+              tooltip: 'Undo',
             ),
-          ),
-          const SizedBox(height: 16),
-          // Список упражнений
-          Text(
-            'Exercises',
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.bold,
+            IconButton(
+              icon: const Icon(Icons.redo),
+              onPressed: session?.canRedo == true
+                  ? () => ref.read(workoutSessionProvider.notifier).redo()
+                  : null,
+              tooltip: 'Redo',
             ),
-          ),
-          const SizedBox(height: 8),
-          ...List.generate(workout.exercises.length, (index) {
-            final exercise = workout.exercises[index];
-            return Card(
-              margin: const EdgeInsets.symmetric(vertical: 4),
-              child: Padding(
-                padding: const EdgeInsets.all(12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '${index + 1}. ${exercise.exercise.name}',
-                      style: theme.textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    // Таблица сетов
-                    Table(
-                      columnWidths: const {
-                        0: FlexColumnWidth(1),
-                        1: FlexColumnWidth(2),
-                        2: FlexColumnWidth(2),
-                      },
-                      children: [
-                        TableRow(
-                          children: [
-                            const Text('Set', style: TextStyle(fontWeight: FontWeight.bold)),
-                            Text(
-                              exercise.exercise.performanceType == PerformanceType.duration
-                                  ? 'Duration'
-                                  : 'Weight',
-                              style: const TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                            Text(
-                              exercise.exercise.performanceType == PerformanceType.duration
-                                  ? ''
-                                  : 'Reps',
-                              style: const TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                          ],
-                        ),
-                        ...List.generate(exercise.setsCount, (setIndex) {
-                          final set = exercise.sets[setIndex];
-                          return TableRow(
-                            children: [
-                              Text('${setIndex + 1}'),
-                              Text(_formatSetValue(set, exercise.exercise.performanceType)),
-                              Text(_formatSetReps(set, exercise.exercise.performanceType)),
-                            ],
-                          );
-                        }),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            );
-          }),
+            IconButton(
+              icon: const Icon(Icons.save),
+              onPressed: _saveWorkout,
+              tooltip: 'Save',
+            ),
+          ] else ...[
+            IconButton(
+              icon: const Icon(Icons.edit),
+              onPressed: () {
+                if (hasUnsavedChanges) {
+                  _showUnsavedChangesDialog();
+                } else {
+                  setState(() => _isEditing = true);
+                }
+              },
+            ),
+            IconButton(
+              icon: const Icon(Icons.delete),
+              onPressed: _deleteWorkout,
+            ),
+          ],
         ],
       ),
+      body: Column(
+        children: [
+          // Workout header
+          Container(
+            padding: const EdgeInsets.all(16),
+            color: Colors.grey.shade50,
+            child: Column(
+              children: [
+                // Date picker
+                ListTile(
+                  leading: const Icon(Icons.calendar_today),
+                  title: const Text('Date'),
+                  trailing: _isEditing
+                      ? TextButton(
+                          onPressed: () async {
+                            final date = await showDatePicker(
+                              context: context,
+                              initialDate: _selectedDate,
+                              firstDate: DateTime(2020),
+                              lastDate: DateTime.now(),
+                            );
+                            if (date != null) {
+                              setState(() => _selectedDate = date);
+                              ref
+                                  .read(workoutSessionProvider.notifier)
+                                  .updateDate(date);
+                            }
+                          },
+                          child: Text(_formatDate(_selectedDate)),
+                        )
+                      : Text(_formatDate(workout.date)),
+                ),
+                // Main muscle group
+                ListTile(
+                  leading: const Icon(Icons.fitness_center),
+                  title: const Text('Main Muscle Group'),
+                  trailing: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.blue.shade100,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Text(
+                      _getMainMuscleGroup(),
+                      style: TextStyle(color: Colors.blue.shade800),
+                    ),
+                  ),
+                ),
+                // Notes
+                ListTile(
+                  leading: const Icon(Icons.note),
+                  title: const Text('Notes'),
+                  subtitle: _isEditing
+                      ? TextField(
+                          controller: _notesController,
+                          decoration: const InputDecoration(
+                            hintText: 'Add notes...',
+                            border: OutlineInputBorder(),
+                          ),
+                          maxLength: 1000,
+                          onChanged: (value) {
+                            ref
+                                .read(workoutSessionProvider.notifier)
+                                .updateNotes(value);
+                          },
+                        )
+                      : workout.notes?.isNotEmpty == true
+                      ? Text(workout.notes!)
+                      : const Text(
+                          'No notes',
+                          style: TextStyle(color: Colors.grey),
+                        ),
+                ),
+                // Status
+                if (_isEditing)
+                  SwitchListTile(
+                    title: const Text('Mark as completed'),
+                    value: workout.isCompleted,
+                    onChanged: (value) {
+                      if (value) {
+                        ref
+                            .read(workoutSessionProvider.notifier)
+                            .completeWorkout();
+                      } else {
+                        ref
+                            .read(workoutSessionProvider.notifier)
+                            .uncompleteWorkout();
+                      }
+                    },
+                  ),
+              ],
+            ),
+          ),
+          // Exercises list
+          Expanded(
+            child: ListView.builder(
+              padding: const EdgeInsets.all(12),
+              itemCount: workout.exercises.length,
+              itemBuilder: (context, index) {
+                final exercisePerf = workout.exercises[index];
+                return ExercisePerformanceWidget(
+                  exercisePerf: exercisePerf,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => ExerciseDetailScreen(
+                          exercisePerf: exercisePerf,
+                          isEditing: _isEditing,
+                          onSetChanged: _isEditing
+                              ? (setIndex, newSet) {
+                                  ref
+                                      .read(workoutSessionProvider.notifier)
+                                      .updateSet(
+                                        exercisePerf.exerciseId,
+                                        setIndex,
+                                        newSet,
+                                      );
+                                }
+                              : null,
+                          onSetAdded: _isEditing
+                              ? (newSet) {
+                                  ref
+                                      .read(workoutSessionProvider.notifier)
+                                      .addSet(exercisePerf.exerciseId, newSet);
+                                }
+                              : null,
+                          onSetRemoved: _isEditing
+                              ? (setIndex) {
+                                  ref
+                                      .read(workoutSessionProvider.notifier)
+                                      .removeSet(
+                                        exercisePerf.exerciseId,
+                                        setIndex,
+                                      );
+                                }
+                              : null,
+                        ),
+                      ),
+                    );
+                  },
+                  isEditing: _isEditing,
+                  onAddSet: _isEditing
+                      ? () {
+                          // TODO: Show dialog to add set
+                        }
+                      : null,
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+      floatingActionButton: _isEditing
+          ? FloatingActionButton(
+              onPressed: () {
+                // Navigate to add exercise
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const ExerciseCatalogScreen(
+                      isCreatingWorkout: true,
+                      isAddingToWorkout: true,
+                    ),
+                  ),
+                ).then((selectedExercises) {
+                  if (selectedExercises != null && selectedExercises is List) {
+                    for (final ex in selectedExercises) {
+                      ref.read(workoutSessionProvider.notifier).addExercise(ex);
+                    }
+                  }
+                });
+              },
+              child: const Icon(Icons.add),
+            )
+          : null,
     );
   }
 
-  String _formatSetValue(SetData set, PerformanceType type) {
-    switch (type) {
-      case PerformanceType.weighted:
-        return '${set.weight ?? 0} kg';
-      case PerformanceType.bodyweight:
-        return 'Bodyweight';
-      case PerformanceType.duration:
-        return '${set.duration ?? 0} min';
-    }
+  String _formatDate(DateTime date) {
+    return '${date.day}/${date.month}/${date.year}';
   }
 
-  String _formatSetReps(SetData set, PerformanceType type) {
-    switch (type) {
-      case PerformanceType.weighted:
-      case PerformanceType.bodyweight:
-        return '${set.reps ?? 0} reps';
-      case PerformanceType.duration:
-        return '';
-    }
+  void _showUnsavedChangesDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Unsaved Changes'),
+        content: const Text(
+          'You have unsaved changes. Do you want to continue editing?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              setState(() => _isEditing = true);
+            },
+            child: const Text('Continue Editing'),
+          ),
+        ],
+      ),
+    );
   }
 }
