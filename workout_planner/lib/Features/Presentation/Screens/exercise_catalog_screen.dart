@@ -94,7 +94,6 @@ class _ExerciseCatalogScreenState extends ConsumerState<ExerciseCatalogScreen> {
                         '${exercise.muscle ?? 'Any'} • ${_getDifficultyString(exercise.level)}',
                         style: const TextStyle(fontSize: 12),
                       ),
-                      trailing: const Icon(Icons.chevron_right),
                       onTap: () {
                         if (widget.isCreatingWorkout &&
                             !widget.isAddingToWorkout) {
@@ -105,7 +104,11 @@ class _ExerciseCatalogScreenState extends ConsumerState<ExerciseCatalogScreen> {
                               _selectedExercises.add(exercise);
                             }
                           });
-                        } else {
+                        }
+                      },
+                      trailing: IconButton(
+                        icon: Icon(Icons.chevron_right),
+                        onPressed: () {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
@@ -118,8 +121,8 @@ class _ExerciseCatalogScreenState extends ConsumerState<ExerciseCatalogScreen> {
                               ),
                             ),
                           );
-                        }
-                      },
+                        },
+                      ),
                     ),
                   );
                 },
