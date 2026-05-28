@@ -37,11 +37,11 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
   String _getDifficultyString(int? difficulty) {
     if (difficulty == null) return 'Not specified';
     switch (difficulty) {
-      case 1:
+      case 0:
         return 'Beginner';
-      case 2:
+      case 1:
         return 'Intermediate';
-      case 3:
+      case 2:
         return 'Advanced';
       default:
         return 'Not specified';

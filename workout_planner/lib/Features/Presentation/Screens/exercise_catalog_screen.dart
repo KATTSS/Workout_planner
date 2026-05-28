@@ -251,11 +251,11 @@ class _ExerciseCatalogScreenState extends ConsumerState<ExerciseCatalogScreen> {
 
   String _getDifficultyString(int? difficulty) {
     switch (difficulty) {
-      case 1:
+      case 0:
         return 'Beginner';
-      case 2:
+      case 1:
         return 'Intermediate';
-      case 3:
+      case 2:
         return 'Advanced';
       default:
         return 'Any';
