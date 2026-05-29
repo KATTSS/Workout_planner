@@ -1,5 +1,3 @@
-// lib/Features/Presentation/widgets/exercise_performance_widget.dart
-
 import 'package:flutter/material.dart';
 import 'package:workout_planner/Features/Domain/Entities/Performance/ex_perfomance.dart';
 import 'package:workout_planner/Features/Domain/Entities/Performance/set_data.dart';
@@ -53,7 +51,6 @@ class ExercisePerformanceWidget extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 8),
-              // Sets preview
               Wrap(
                 spacing: 8,
                 runSpacing: 8,

@@ -1,12 +1,10 @@
-// lib/Features/Presentation/screens/home_screen.dart
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:workout_planner/Features/Application/Providers/workout_providers.dart';
 import 'package:workout_planner/Features/Domain/Entities/Workout/workout.dart';
 import 'package:workout_planner/Features/Presentation/Screens/workout_detail_screen.dart';
 import 'package:workout_planner/Features/Presentation/Screens/statistics_screen.dart';
 import 'package:workout_planner/Features/Presentation/Screens/exercise_catalog_screen.dart';
+import 'package:workout_planner/Features/Presentation/Viewmodels/home_viewmodel.dart';
 import 'package:workout_planner/Features/Presentation/Widgets/workout_card.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
@@ -26,19 +24,22 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   Future<void> _loadWorkouts() async {
-    final getHistory = ref.read(getWorkoutHistoryProvider);
-    final workouts = await getHistory.getRecentWorkouts(limit: 10);
+    final viewModel = ref.read(homeViewModelProvider);
+    final workouts = await viewModel.loadWorkouts(limit: 10);
     setState(() {
       _recentWorkouts = workouts;
     });
   }
 
   Future<void> _deleteWorkout(Workout workout) async {
+    final viewModel = ref.read(homeViewModelProvider);
+    final formattedDate = viewModel.formatDate(workout.date);
+
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Delete Workout'),
-        content: Text('Delete workout from ${_formatDate(workout.date)}?'),
+        content: Text('Delete workout from $formattedDate?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -54,19 +55,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
 
     if (confirmed == true) {
-      final deleteWorkout = ref.read(deleteWorkoutProvider);
-      await deleteWorkout(workout.id);
-      _loadWorkouts();
-      if (mounted) {
+      final success = await viewModel.deleteWorkout(workout.id);
+
+      if (success && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Workout deleted')),
+          SnackBar(content: Text(viewModel.getDeleteSuccessMessage(workout))),
+        );
+        await _loadWorkouts();
+      } else if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to delete workout')),
         );
       }
     }
-  }
-
-  String _formatDate(DateTime date) {
-    return '${date.day}/${date.month}/${date.year}';
   }
 
   @override
@@ -99,10 +100,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   const SizedBox(height: 16),
                   Text(
                     'No workouts yet',
-                    style: TextStyle(
-                      fontSize: 20,
-                      color: Colors.grey.shade600,
-                    ),
+                    style: TextStyle(fontSize: 20, color: Colors.grey.shade600),
                   ),
                   const SizedBox(height: 8),
                   Text(
@@ -115,7 +113,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) => const ExerciseCatalogScreen(isCreatingWorkout: true),
+                          builder: (_) => const ExerciseCatalogScreen(
+                            isCreatingWorkout: true,
+                          ),
                         ),
                       ).then((_) => _loadWorkouts());
                     },
@@ -152,7 +152,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (_) => const ExerciseCatalogScreen(isCreatingWorkout: true),
+              builder: (_) =>
+                  const ExerciseCatalogScreen(isCreatingWorkout: true),
             ),
           ).then((_) => _loadWorkouts());
         },
