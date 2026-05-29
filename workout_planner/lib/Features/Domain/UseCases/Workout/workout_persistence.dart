@@ -46,7 +46,9 @@ class GetWorkoutHistory {
     return _historyRepo.getAll(limit: limit, newestFirst: true);
   }
 
-  Future<List<Workout>> getWorkoutsByDateRange(DateTime start, DateTime end) {
-    return _historyRepo.getAfterDate(start);
+  Future<List<Workout>> getWorkoutsByDateRange(DateTime start, DateTime end) async {
+    final afterStart = await _historyRepo.getAfterDate(start);
+    final beforeEnd = await _historyRepo.getBeforeDate(end);
+    return afterStart.where((w) => beforeEnd.contains(w)).toList();
   }
 }

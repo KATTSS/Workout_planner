@@ -10,6 +10,13 @@ class WorkoutBuilder {
   bool _isCompleted = false;
   bool _isBuilt = false;
 
+  int get id => _id ?? -1;
+  DateTime get date => _date ?? DateTime(1979, 1, 1);
+  List<ExercisePerformance> get exercises => List.unmodifiable(_exercises);
+  String? get notes => _notes;
+  bool get isCompleted => _isCompleted;
+  bool get isBuilt => _isBuilt;
+
   WorkoutBuilder setId(int id) {
     if (id <= 0) {
       throw WorkoutValidationException('Workout ID must be positive');

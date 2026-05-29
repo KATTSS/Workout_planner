@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:workout_planner/Features/Domain/Entities/Workout/workout.dart';
-import 'package:workout_planner/Features/Application/Workout/workout_session.dart';
+import 'package:workout_planner/Features/Domain/UseCases/Workout/workout_session.dart';
 import 'package:workout_planner/Features/Domain/Entities/Performance/ex_perfomance.dart';
 import 'package:workout_planner/Features/Domain/Entities/Performance/set_data.dart';
 import 'package:workout_planner/Features/Domain/Entities/excercise.dart';

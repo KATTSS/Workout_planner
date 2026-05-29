@@ -18,6 +18,17 @@ class SetData {
     }
   }
 
+  static SetData empty(PerformanceType type) {
+    switch (type) {
+      case PerformanceType.weighted:
+        return SetData.weighted(weight: 0, reps: 10);
+      case PerformanceType.bodyweight:
+        return SetData.bodyweight(reps: 10);
+      case PerformanceType.duration:
+        return SetData.duration(duration: 60);
+    }
+  }
+
   factory SetData.weighted({required double weight, required int reps}) {
     return SetData(weight: weight, reps: reps);
   }
