@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:workout_planner/Features/Domain/Entities/Workout/workout.dart';
+import 'package:workout_planner/Features/Domain/Entities/Performance/ex_perfomance.dart';
 import 'package:workout_planner/Features/Presentation/Screens/workout_detail_screen.dart';
 import 'package:workout_planner/Features/Presentation/Screens/statistics_screen.dart';
 import 'package:workout_planner/Features/Presentation/Screens/exercise_catalog_screen.dart';
@@ -29,6 +30,34 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     setState(() {
       _recentWorkouts = workouts;
     });
+  }
+
+  Future<void> _createWorkout() async {
+    final result = await Navigator.push<List<ExercisePerformance>>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const ExerciseCatalogScreen(isCreatingWorkout: true),
+      ),
+    );
+
+    if (result != null && result.isNotEmpty && mounted) {
+      final viewModel = ref.read(homeViewModelProvider);
+
+      final createdWorkout = await viewModel.createWorkout(result);
+
+      if (createdWorkout != null && mounted) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => WorkoutDetailScreen(workout: createdWorkout),
+          ),
+        ).then((_) => _loadWorkouts());
+      } else if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to create workout')),
+        );
+      }
+    }
   }
 
   Future<void> _deleteWorkout(Workout workout) async {
@@ -109,16 +138,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   ),
                   const SizedBox(height: 24),
                   ElevatedButton.icon(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const ExerciseCatalogScreen(
-                            isCreatingWorkout: true,
-                          ),
-                        ),
-                      ).then((_) => _loadWorkouts());
-                    },
+                    onPressed: _createWorkout,
                     icon: const Icon(Icons.add),
                     label: const Text('Create Workout'),
                   ),
@@ -148,15 +168,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ),
             ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) =>
-                  const ExerciseCatalogScreen(isCreatingWorkout: true),
-            ),
-          ).then((_) => _loadWorkouts());
-        },
+        onPressed: _createWorkout,
         child: const Icon(Icons.add),
       ),
     );

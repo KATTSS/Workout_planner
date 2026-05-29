@@ -49,7 +49,8 @@ class _ExerciseCatalogScreenState extends ConsumerState<ExerciseCatalogScreen> {
             icon: Icon(_showFilters ? Icons.close : Icons.filter_list),
             onPressed: () => setState(() => _showFilters = !_showFilters),
           ),
-          if (viewModel.isCreatingWorkout && _selectedExercises.isNotEmpty)
+          if ((viewModel.isCreatingWorkout || viewModel.isAddingToWorkout) &&
+              _selectedExercises.isNotEmpty)
             TextButton(
               onPressed: () {
                 final exercisePerformances = viewModel
@@ -94,8 +95,8 @@ class _ExerciseCatalogScreenState extends ConsumerState<ExerciseCatalogScreen> {
                         style: const TextStyle(fontSize: 12),
                       ),
                       onTap: () {
-                        if (viewModel.isCreatingWorkout &&
-                            !viewModel.isAddingToWorkout) {
+                        if (viewModel.isCreatingWorkout ||
+                            viewModel.isAddingToWorkout) {
                           setState(() {
                             if (isSelected) {
                               _selectedExercises.remove(exercise);
