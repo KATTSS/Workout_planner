@@ -103,13 +103,11 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
     if (confirmed == true) {
       final deleteWorkout = ref.read(deleteWorkoutProvider);
       final workoutId = widget.workout.id;
-      if (workoutId != null) {
-        await deleteWorkout(workoutId);
-        if (mounted) {
-          Navigator.pop(context);
-        }
+      await deleteWorkout(workoutId);
+      if (mounted) {
+        Navigator.pop(context);
       }
-    }
+        }
   }
 
   @override

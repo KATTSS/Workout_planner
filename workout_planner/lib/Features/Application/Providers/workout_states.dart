@@ -215,7 +215,7 @@ class WorkoutBuilderNotifier extends StateNotifier<WorkoutBuilderState> {
       final workout = state.builder.build();
       state = state.copyWith(builtWorkout: workout, isValid: true);
       return workout;
-    } on WorkoutValidationException catch (e) {
+    } on WorkoutValidationException {
       state = state.copyWith(isValid: false);
       rethrow;
     }

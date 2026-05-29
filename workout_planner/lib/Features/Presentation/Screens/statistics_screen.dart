@@ -166,7 +166,7 @@ class StatisticsScreen extends ConsumerWidget {
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
         itemCount: sortedEntries.take(10).length,
-        separatorBuilder: (_, __) => const Divider(),
+        separatorBuilder: (_, _) => const Divider(),
         itemBuilder: (context, index) {
           final entry = sortedEntries[index];
           return ListTile(

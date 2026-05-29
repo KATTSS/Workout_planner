@@ -35,7 +35,7 @@ class _ExerciseCatalogScreenState extends ConsumerState<ExerciseCatalogScreen> {
     final filteredExercises = exercisesAsync.when(
       data: (exercises) => _filterExercises(exercises, filters),
       loading: () => [],
-      error: (_, __) => [],
+      error: (_, _) => [],
     );
 
     return Scaffold(

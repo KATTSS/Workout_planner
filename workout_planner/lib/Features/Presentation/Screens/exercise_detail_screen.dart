@@ -153,15 +153,7 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
                   child: ListTile(
                     leading: CircleAvatar(child: Text('${index + 1}')),
                     title: Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            '${set.weight != null ? '${set.weight} kg' : '—'} × ${set.reps ?? '—'}',
-                            style: const TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                        ),
-                        if (set.duration != null) Text('${set.duration} sec'),
-                      ],
+                      children: [Expanded(child: Text(_getSetInfo(set)))],
                     ),
                     trailing: widget.isEditing
                         ? Row(
@@ -195,6 +187,11 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
             )
           : null,
     );
+  }
+
+  String _getSetInfo(SetData set) {
+    if (set.duration != null) return '${set.duration} sec';
+    return '${set.weight != null ? '${set.weight} kg' : '—'} × ${set.reps ?? '—'}';
   }
 
   Widget _buildInfoChip(IconData icon, String label) {
