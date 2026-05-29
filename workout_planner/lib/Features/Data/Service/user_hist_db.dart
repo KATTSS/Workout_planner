@@ -34,6 +34,12 @@ class UserHistDb {
       if (trimmed.isEmpty) continue;
       await db.execute(trimmed);
     }
+
+    if (version == 1) {
+      await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_workout_date ON workout_table(date)',
+      );
+    }
   }
 
   Future<List<Map<String, dynamic>>> executeQuery(QueryBuilder builder) async {

@@ -11,8 +11,15 @@ class WeightedExercisePerformance extends ExercisePerformance {
     required super.exerciseId,
     required super.exercise,
     required List<SetData> sets,
-  }) : _sets = sets,
-       assert(sets.every((s) => s.isValidFor(PerformanceType.weighted)));
+  }) : _sets = sets {
+    for (var set in sets) {
+      if (!set.isValidFor(PerformanceType.weighted)) {
+        throw ArgumentError(
+          'Invalid set data for weighted exercise: weight >= 0 and reps > 0 required',
+        );
+      }
+    }
+  }
 
   @override
   int get setsCount => _sets.length;
@@ -31,14 +38,12 @@ class WeightedExercisePerformance extends ExercisePerformance {
   @override
   double? getDurationForSet(int setIndex) => null;
 
-  // Вспомогательные геттеры
   List<double> get weights => _sets.map((s) => s.weight!).toList();
   List<int> get reps => _sets.map((s) => s.reps!).toList();
 
   double get totalVolume =>
       _sets.fold(0.0, (sum, set) => sum + (set.weight! * set.reps!));
 
-  // Иммутабельные методы для работы с сетами
   @override
   WeightedExercisePerformance addSet(SetData set) {
     if (!set.isValidFor(PerformanceType.weighted)) {

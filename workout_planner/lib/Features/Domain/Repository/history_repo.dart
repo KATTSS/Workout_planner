@@ -4,7 +4,7 @@ abstract class IHistoryRepo {
   Future<int> saveWorkout(Workout workout);
   Future<Workout?> getWorkout(int id);
   Future<void> deleteWorkout(int id);
-  Future<int> updateWorkout(Workout workout);
+  Future<void> updateWorkout(Workout workout);
 
   Future<List<Workout>> getByDate(DateTime date, {int? limit});
   Future<List<Workout>> getBeforeDate(DateTime date, {int? limit});

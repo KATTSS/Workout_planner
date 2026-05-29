@@ -11,11 +11,11 @@ class ManageWorkoutExercises {
   }
 
   Workout removeExercise(Workout workout, int exerciseId) {
-    if (workout.isCompleted && workout.exercises.length <= 1) {
-      throw WorkoutValidationException(
-        'Cannot remove last exercise from completed workout',
-      );
-    }
+    // if (workout.isCompleted && workout.exercises.length <= 1) {
+    //   throw WorkoutValidationException(
+    //     'Cannot remove last exercise from completed workout',
+    //   );
+    // }
     final updatedExercises = workout.exercises
         .where((ex) => ex.exerciseId != exerciseId)
         .toList();
@@ -23,12 +23,14 @@ class ManageWorkoutExercises {
   }
 
   Workout reorderExercises(Workout workout, int oldIndex, int newIndex) {
-    if (oldIndex < 0 || oldIndex >= workout.exercises.length) {
+    if (oldIndex < 0 ||
+        oldIndex >= workout.exercises.length ||
+        newIndex >= workout.exercises.length ||
+        newIndex < 0) {
       throw RangeError('Invalid exercise index');
     }
 
     final updatedExercises = List<ExercisePerformance>.from(workout.exercises);
-    if (oldIndex < newIndex) newIndex -= 1;
     final exercise = updatedExercises.removeAt(oldIndex);
     updatedExercises.insert(newIndex, exercise);
     return workout.copyWith(exercises: updatedExercises);

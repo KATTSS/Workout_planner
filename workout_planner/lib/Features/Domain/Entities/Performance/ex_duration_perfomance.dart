@@ -2,6 +2,7 @@ import 'package:workout_planner/Features/Domain/Entities/Performance/ex_perfoman
 import 'package:workout_planner/Features/Domain/Entities/Performance/ex_visitor.dart';
 import 'package:workout_planner/Features/Domain/Entities/Performance/set_data.dart';
 import 'package:workout_planner/Features/Domain/Entities/Performance/performance_type.dart';
+import 'package:collection/collection.dart';
 
 class DurationExercisePerformance extends ExercisePerformance {
   final List<SetData> _sets;
@@ -10,8 +11,15 @@ class DurationExercisePerformance extends ExercisePerformance {
     required super.exerciseId,
     required super.exercise,
     required List<SetData> sets,
-  }) : _sets = sets,
-       assert(sets.every((s) => s.isValidFor(PerformanceType.duration)));
+  }) : _sets = sets {
+    for (var set in sets) {
+      if (!set.isValidFor(PerformanceType.duration)) {
+        throw ArgumentError(
+          'Invalid set data for duration exercise: duration must be > 0',
+        );
+      }
+    }
+  }
 
   @override
   int get setsCount => _sets.length;
@@ -26,7 +34,7 @@ class DurationExercisePerformance extends ExercisePerformance {
   int? getRepsForSet(int setIndex) => null;
 
   @override
-  double? getDurationForSet(int setIndex) => 
+  double? getDurationForSet(int setIndex) =>
       setIndex < _sets.length ? _sets[setIndex].duration : null;
 
   List<double> get durations => _sets.map((s) => s.duration!).toList();
@@ -66,10 +74,10 @@ class DurationExercisePerformance extends ExercisePerformance {
     if (!newSet.isValidFor(PerformanceType.duration)) {
       throw ArgumentError('Invalid set data for duration exercise');
     }
-    
+
     final updatedSets = List<SetData>.from(_sets);
     updatedSets[setIndex] = newSet;
-    
+
     return DurationExercisePerformance(
       exerciseId: exerciseId,
       exercise: exercise,
@@ -82,7 +90,7 @@ class DurationExercisePerformance extends ExercisePerformance {
     if (setIndex < 0 || setIndex >= _sets.length) {
       throw RangeError.index(setIndex, _sets);
     }
-    
+
     final updatedSet = SetData.duration(duration: duration);
     return updateSet(setIndex, updatedSet);
   }
@@ -101,4 +109,16 @@ class DurationExercisePerformance extends ExercisePerformance {
   T accept<T>(ExercisePerformanceVisitor<T> visitor) {
     return visitor.visitDuration(this);
   }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is DurationExercisePerformance &&
+        other.exerciseId == exerciseId &&
+        other.exercise == exercise &&
+        const ListEquality().equals(other._sets, _sets);
+  }
+
+  @override
+  int get hashCode => Object.hash(exerciseId, exercise, Object.hashAll(_sets));
 }

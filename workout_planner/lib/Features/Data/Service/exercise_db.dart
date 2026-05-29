@@ -1,5 +1,7 @@
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:path/path.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:sqflite/sqflite.dart';
 import 'dart:async';
 import 'dart:io';
@@ -15,11 +17,12 @@ class ExerciseDb {
   Database? _db;
   final String _assetPath;
   bool _isInitializing = false;
+  bool _isInitialized = false;
 
   ExerciseDb._({required String assetPath}) : _assetPath = assetPath;
 
   Future<Database> get database async {
-    if (_db != null) return _db!;
+    if (_db != null && _isInitialized) return _db!;
 
     if (_isInitializing) {
       while (_isInitializing) {
@@ -31,6 +34,7 @@ class ExerciseDb {
     _isInitializing = true;
     try {
       _db = await _init();
+      _isInitialized = true;
       return _db!;
     } finally {
       _isInitializing = false;
@@ -38,14 +42,45 @@ class ExerciseDb {
   }
 
   Future<Database> _init() async {
-    final path = join(await getDatabasesPath(), 'exercise_data.db');
+    try {
+      final documentsDir = await getApplicationDocumentsDirectory();
+      final dbPath = join(documentsDir.path, 'exercise_data.db');
 
-    final exists = await databaseExists(path);
-    if (!exists) {
-      await _copyDatabaseFromAssets(path);
+      debugPrint('Exercise DB path: $dbPath');
+
+      final exists = await File(dbPath).exists();
+
+      if (!exists) {
+        debugPrint('Copying database from assets to $dbPath');
+        await _copyDatabaseFromAssets(dbPath);
+        debugPrint('Database copied successfully');
+      } else {
+        debugPrint('Database already exists at $dbPath');
+      }
+
+      final db = await openDatabase(
+        dbPath,
+        readOnly: true,
+        singleInstance: true,
+      );
+
+      final result = await db.query(
+        'sqlite_master',
+        where: 'type = ? AND name = ?',
+        whereArgs: ['table', 'excercise_table'],
+      );
+
+      if (result.isEmpty) {
+        throw Exception('excercise_table not found in database');
+      }
+
+      debugPrint('Database opened successfully, found ${result.length} tables');
+
+      return db;
+    } catch (e) {
+      debugPrint('Error initializing database: $e');
+      rethrow;
     }
-
-    return await openDatabase(path, readOnly: true, singleInstance: true);
   }
 
   Future<void> _copyDatabaseFromAssets(String targetPath) async {
@@ -79,6 +114,7 @@ class ExerciseDb {
   void dispose() {
     _db?.close();
     _db = null;
+    _isInitialized = false;
     _instance = null;
   }
 }

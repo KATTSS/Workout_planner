@@ -17,12 +17,11 @@ class CreateWorkout {
 
 class SaveWorkout {
   final IHistoryRepo _historyRepo;
-
   SaveWorkout(this._historyRepo);
 
   Future<int> call(Workout workout) async {
     if (workout.exercises.isEmpty) {
-      throw WorkoutValidationException('Cannot save empty workout');
+      throw WorkoutValidationException('Тренировка не может быть пустой. Используйте удаление, если хотите полностью стереть её.');
     }
     return _historyRepo.saveWorkout(workout);
   }
@@ -47,7 +46,9 @@ class GetWorkoutHistory {
     return _historyRepo.getAll(limit: limit, newestFirst: true);
   }
 
-  Future<List<Workout>> getWorkoutsByDateRange(DateTime start, DateTime end) {
-    return _historyRepo.getAfterDate(start);
+  Future<List<Workout>> getWorkoutsByDateRange(DateTime start, DateTime end) async {
+    final afterStart = await _historyRepo.getAfterDate(start);
+    final beforeEnd = await _historyRepo.getBeforeDate(end);
+    return afterStart.where((w) => beforeEnd.contains(w)).toList();
   }
 }
