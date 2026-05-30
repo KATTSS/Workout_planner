@@ -24,6 +24,22 @@ class _ExerciseCatalogScreenState extends ConsumerState<ExerciseCatalogScreen> {
   bool _showFilters = false;
 
   @override
+  void initState() {
+    super.initState();
+    Future.microtask(() {
+      final viewModel = ref.read(
+        exerciseCatalogViewModelProvider(
+          ExerciseCatalogViewModelParams(
+            isCreatingWorkout: widget.isCreatingWorkout,
+            isAddingToWorkout: widget.isAddingToWorkout,
+          ),
+        ),
+      );
+      viewModel.resetFilters();
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     final params = ExerciseCatalogViewModelParams(
       isCreatingWorkout: widget.isCreatingWorkout,
