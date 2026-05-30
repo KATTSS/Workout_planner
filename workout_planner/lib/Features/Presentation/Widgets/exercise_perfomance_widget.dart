@@ -6,6 +6,7 @@ class ExercisePerformanceWidget extends StatelessWidget {
   final ExercisePerformance exercisePerf;
   final VoidCallback onTap;
   final bool isEditing;
+  final VoidCallback? onLongPress;
   final VoidCallback? onAddSet;
 
   const ExercisePerformanceWidget({
@@ -13,6 +14,7 @@ class ExercisePerformanceWidget extends StatelessWidget {
     required this.exercisePerf,
     required this.onTap,
     this.isEditing = false,
+    this.onLongPress,
     this.onAddSet,
   });
 
@@ -24,6 +26,7 @@ class ExercisePerformanceWidget extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12),
       child: InkWell(
         onTap: onTap,
+        onLongPress: onLongPress,
         borderRadius: BorderRadius.circular(12),
         child: Padding(
           padding: const EdgeInsets.all(12),

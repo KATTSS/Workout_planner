@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:workout_planner/Features/Domain/Entities/Workout/workout.dart';
 import 'package:workout_planner/Features/Presentation/Screens/exercise_catalog_screen.dart';
 import 'package:workout_planner/Features/Presentation/Screens/exercise_detail_screen.dart';
+import 'package:workout_planner/Features/Domain/Entities/Performance/ex_perfomance.dart';
+import 'package:workout_planner/Features/Domain/Entities/Performance/set_data.dart';
 import 'package:workout_planner/Features/Presentation/Viewmodels/workout_detail_viewmodel.dart';
 import 'package:workout_planner/Features/Presentation/Widgets/exercise_perfomance_widget.dart';
 
@@ -258,8 +260,52 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
                               : null,
                         ),
                       ),
-                    );
+                    ).then((result) {
+                      // If the detail screen returned an updated sets list on save,
+                      // replace the exercise in the session so UI stays in sync.
+                      if (result != null && result is List<SetData>) {
+                        final updated = ExercisePerformance.create(
+                          exercise: exercisePerf.exercise,
+                          sets: result.cast<SetData>(),
+                        );
+                        viewModel.session!.replaceExercise(
+                          exercisePerf.exerciseId,
+                          updated,
+                        );
+                      }
+                    });
                   },
+                  onLongPress: _isEditing
+                      ? () async {
+                          final confirmed = await showDialog<bool>(
+                            context: context,
+                            builder: (context) => AlertDialog(
+                              title: const Text('Remove Exercise'),
+                              content: const Text(
+                                'Remove this exercise from the workout?',
+                              ),
+                              actions: [
+                                TextButton(
+                                  onPressed: () =>
+                                      Navigator.pop(context, false),
+                                  child: const Text('Cancel'),
+                                ),
+                                TextButton(
+                                  onPressed: () => Navigator.pop(context, true),
+                                  style: TextButton.styleFrom(
+                                    foregroundColor: Colors.red,
+                                  ),
+                                  child: const Text('Remove'),
+                                ),
+                              ],
+                            ),
+                          );
+
+                          if (confirmed == true) {
+                            viewModel.removeExercise(exercisePerf.exerciseId);
+                          }
+                        }
+                      : null,
                   isEditing: _isEditing,
                   onAddSet: _isEditing
                       ? () {

@@ -27,36 +27,24 @@ class ExerciseDetailScreen extends ConsumerStatefulWidget {
 }
 
 class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
-  late ExerciseDetailViewModel _viewModel;
+  late final ExerciseDetailViewModelParams _params;
 
   @override
   void initState() {
     super.initState();
 
-    final params = ExerciseDetailViewModelParams(
+    _params = ExerciseDetailViewModelParams(
       exercisePerf: widget.exercisePerf,
       isEditing: widget.isEditing,
       onSetChanged: widget.onSetChanged,
       onSetAdded: widget.onSetAdded,
       onSetRemoved: widget.onSetRemoved,
     );
-
-    _viewModel = ref.read(exerciseDetailViewModelProvider(params));
   }
 
   @override
   Widget build(BuildContext context) {
-    final viewModel = ref.watch(
-      exerciseDetailViewModelProvider(
-        ExerciseDetailViewModelParams(
-          exercisePerf: widget.exercisePerf,
-          isEditing: widget.isEditing,
-          onSetChanged: widget.onSetChanged,
-          onSetAdded: widget.onSetAdded,
-          onSetRemoved: widget.onSetRemoved,
-        ),
-      ),
-    );
+    final viewModel = ref.watch(exerciseDetailViewModelProvider(_params));
 
     final exercise = viewModel.exercise;
 
@@ -295,7 +283,7 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
                       duration == null &&
                       durationController.text.isNotEmpty) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Invalid reps value')),
+                      const SnackBar(content: Text('Invalid duration value')),
                     );
                     return;
                   }
@@ -394,7 +382,7 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
                 duration: duration,
               );
 
-              viewModel.addSet();
+              viewModel.addSet(newSet);
               Navigator.pop(context);
             },
             child: const Text('Add'),
