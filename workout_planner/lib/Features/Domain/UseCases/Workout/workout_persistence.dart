@@ -21,8 +21,16 @@ class SaveWorkout {
 
   Future<int> call(Workout workout) async {
     if (workout.exercises.isEmpty) {
-      throw WorkoutValidationException('Тренировка не может быть пустой. Используйте удаление, если хотите полностью стереть её.');
+      throw WorkoutValidationException(
+        'Тренировка не может быть пустой. Используйте удаление, если хотите полностью стереть её.',
+      );
     }
+    // If workout already has an id (existing record) - update it, otherwise insert a new one.
+    if (workout.id != -1 && workout.id > 0) {
+      await _historyRepo.updateWorkout(workout);
+      return workout.id;
+    }
+
     return _historyRepo.saveWorkout(workout);
   }
 }
@@ -46,7 +54,10 @@ class GetWorkoutHistory {
     return _historyRepo.getAll(limit: limit, newestFirst: true);
   }
 
-  Future<List<Workout>> getWorkoutsByDateRange(DateTime start, DateTime end) async {
+  Future<List<Workout>> getWorkoutsByDateRange(
+    DateTime start,
+    DateTime end,
+  ) async {
     final afterStart = await _historyRepo.getAfterDate(start);
     final beforeEnd = await _historyRepo.getBeforeDate(end);
     return afterStart.where((w) => beforeEnd.contains(w)).toList();

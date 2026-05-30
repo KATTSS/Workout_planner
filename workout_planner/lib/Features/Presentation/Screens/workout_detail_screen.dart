@@ -1,11 +1,12 @@
-// lib/Features/Presentation/screens/workout_detail_screen.dart
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:workout_planner/Features/Application/Providers/workout_providers.dart';
 import 'package:workout_planner/Features/Domain/Entities/Workout/workout.dart';
 import 'package:workout_planner/Features/Presentation/Screens/exercise_catalog_screen.dart';
 import 'package:workout_planner/Features/Presentation/Screens/exercise_detail_screen.dart';
+import 'package:workout_planner/Features/Domain/Entities/Performance/ex_perfomance.dart';
+import 'package:workout_planner/Features/Domain/Entities/Performance/performance_type.dart';
+import 'package:workout_planner/Features/Domain/Entities/Performance/set_data.dart';
+import 'package:workout_planner/Features/Presentation/Viewmodels/workout_detail_viewmodel.dart';
 import 'package:workout_planner/Features/Presentation/Widgets/exercise_perfomance_widget.dart';
 
 class WorkoutDetailScreen extends ConsumerStatefulWidget {
@@ -30,9 +31,11 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
     _notesController = TextEditingController(text: widget.workout.notes);
     _selectedDate = widget.workout.date;
 
-    // Загружаем тренировку в сессию
     Future.microtask(() {
-      ref.read(workoutSessionProvider.notifier).loadWorkout(widget.workout);
+      final viewModel = ref.read(
+        workoutDetailViewModelProvider(widget.workout),
+      );
+      viewModel.loadWorkout();
     });
   }
 
@@ -42,40 +45,20 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
     super.dispose();
   }
 
-  String _getMainMuscleGroup() {
-    final workout = ref.read(workoutSessionProvider).session?.currentWorkout;
-    if (workout == null) return 'None';
-
-    final muscleGroups = <String, int>{};
-    for (final exPerf in workout.exercises) {
-      final group = exPerf.exercise.muscle ?? 'Other';
-      muscleGroups[group] = (muscleGroups[group] ?? 0) + 1;
-    }
-    if (muscleGroups.isEmpty) return 'None';
-    return muscleGroups.entries.reduce((a, b) => a.value > b.value ? a : b).key;
-  }
-
   Future<void> _saveWorkout() async {
-    final session = ref.read(workoutSessionProvider).session;
-    if (session == null) return;
+    final viewModel = ref.read(workoutDetailViewModelProvider(widget.workout));
+    final success = await viewModel.saveWorkout();
 
-    final saveWorkout = ref.read(saveWorkoutProvider);
-    final currentWorkout = session.currentWorkout;
-
-    try {
-      await saveWorkout(currentWorkout);
-      session.markAsSaved();
-      if (mounted) {
+    if (mounted) {
+      if (success) {
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(const SnackBar(content: Text('Workout saved')));
         setState(() => _isEditing = false);
-      }
-    } catch (e) {
-      if (mounted) {
+      } else {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Error: $e')));
+        ).showSnackBar(const SnackBar(content: Text('Error saving workout')));
       }
     }
   }
@@ -101,22 +84,22 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
     );
 
     if (confirmed == true) {
-      final deleteWorkout = ref.read(deleteWorkoutProvider);
-      final workoutId = widget.workout.id;
-      await deleteWorkout(workoutId);
-      if (mounted) {
+      final viewModel = ref.read(
+        workoutDetailViewModelProvider(widget.workout),
+      );
+      final success = await viewModel.deleteWorkout();
+
+      if (mounted && success) {
         Navigator.pop(context);
       }
-        }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final sessionState = ref.watch(workoutSessionProvider);
-    final session = sessionState.session;
-    final workout = session?.currentWorkout;
-    final error = sessionState.error;
-    final hasUnsavedChanges = sessionState.hasUnsavedChanges;
+    final viewModel = ref.watch(workoutDetailViewModelProvider(widget.workout));
+    final workout = viewModel.currentWorkout;
+    final hasUnsavedChanges = viewModel.hasUnsavedChanges;
 
     if (workout == null) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
@@ -129,16 +112,12 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
           if (_isEditing) ...[
             IconButton(
               icon: const Icon(Icons.undo),
-              onPressed: session?.canUndo == true
-                  ? () => ref.read(workoutSessionProvider.notifier).undo()
-                  : null,
+              onPressed: viewModel.canUndo ? viewModel.undo : null,
               tooltip: 'Undo',
             ),
             IconButton(
               icon: const Icon(Icons.redo),
-              onPressed: session?.canRedo == true
-                  ? () => ref.read(workoutSessionProvider.notifier).redo()
-                  : null,
+              onPressed: viewModel.canRedo ? viewModel.redo : null,
               tooltip: 'Redo',
             ),
             IconButton(
@@ -166,13 +145,11 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
       ),
       body: Column(
         children: [
-          // Workout header
           Container(
             padding: const EdgeInsets.all(16),
             color: Colors.grey.shade50,
             child: Column(
               children: [
-                // Date picker
                 ListTile(
                   leading: const Icon(Icons.calendar_today),
                   title: const Text('Date'),
@@ -187,16 +164,13 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
                             );
                             if (date != null) {
                               setState(() => _selectedDate = date);
-                              ref
-                                  .read(workoutSessionProvider.notifier)
-                                  .updateDate(date);
+                              viewModel.updateDate(date);
                             }
                           },
-                          child: Text(_formatDate(_selectedDate)),
+                          child: Text(viewModel.formatDate(_selectedDate)),
                         )
-                      : Text(_formatDate(workout.date)),
+                      : Text(viewModel.formatDate(workout.date)),
                 ),
-                // Main muscle group
                 ListTile(
                   leading: const Icon(Icons.fitness_center),
                   title: const Text('Main Muscle Group'),
@@ -210,12 +184,11 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: Text(
-                      _getMainMuscleGroup(),
+                      viewModel.getMainMuscleGroup(),
                       style: TextStyle(color: Colors.blue.shade800),
                     ),
                   ),
                 ),
-                // Notes
                 ListTile(
                   leading: const Icon(Icons.note),
                   title: const Text('Notes'),
@@ -227,11 +200,7 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
                             border: OutlineInputBorder(),
                           ),
                           maxLength: 1000,
-                          onChanged: (value) {
-                            ref
-                                .read(workoutSessionProvider.notifier)
-                                .updateNotes(value);
-                          },
+                          onChanged: viewModel.updateNotes,
                         )
                       : workout.notes?.isNotEmpty == true
                       ? Text(workout.notes!)
@@ -240,27 +209,15 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
                           style: TextStyle(color: Colors.grey),
                         ),
                 ),
-                // Status
                 if (_isEditing)
                   SwitchListTile(
                     title: const Text('Mark as completed'),
                     value: workout.isCompleted,
-                    onChanged: (value) {
-                      if (value) {
-                        ref
-                            .read(workoutSessionProvider.notifier)
-                            .completeWorkout();
-                      } else {
-                        ref
-                            .read(workoutSessionProvider.notifier)
-                            .uncompleteWorkout();
-                      }
-                    },
+                    onChanged: viewModel.toggleCompleted,
                   ),
               ],
             ),
           ),
-          // Exercises list
           Expanded(
             child: ListView.builder(
               padding: const EdgeInsets.all(12),
@@ -278,40 +235,81 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
                           isEditing: _isEditing,
                           onSetChanged: _isEditing
                               ? (setIndex, newSet) {
-                                  ref
-                                      .read(workoutSessionProvider.notifier)
-                                      .updateSet(
-                                        exercisePerf.exerciseId,
-                                        setIndex,
-                                        newSet,
-                                      );
+                                  viewModel.updateSet(
+                                    exercisePerf.exerciseId,
+                                    setIndex,
+                                    newSet,
+                                  );
                                 }
                               : null,
                           onSetAdded: _isEditing
                               ? (newSet) {
-                                  ref
-                                      .read(workoutSessionProvider.notifier)
-                                      .addSet(exercisePerf.exerciseId, newSet);
+                                  viewModel.addSet(
+                                    exercisePerf.exerciseId,
+                                    newSet,
+                                  );
                                 }
                               : null,
                           onSetRemoved: _isEditing
                               ? (setIndex) {
-                                  ref
-                                      .read(workoutSessionProvider.notifier)
-                                      .removeSet(
-                                        exercisePerf.exerciseId,
-                                        setIndex,
-                                      );
+                                  viewModel.removeSet(
+                                    exercisePerf.exerciseId,
+                                    setIndex,
+                                  );
                                 }
                               : null,
                         ),
                       ),
-                    );
+                    ).then((result) {
+                      // If the detail screen returned an updated sets list on save,
+                      // replace the exercise in the session so UI stays in sync.
+                      if (result != null && result is List<SetData>) {
+                        final updated = ExercisePerformance.create(
+                          exercise: exercisePerf.exercise,
+                          sets: result.cast<SetData>(),
+                        );
+                        viewModel.session!.replaceExercise(
+                          exercisePerf.exerciseId,
+                          updated,
+                        );
+                      }
+                    });
                   },
+                  onLongPress: _isEditing
+                      ? () async {
+                          final confirmed = await showDialog<bool>(
+                            context: context,
+                            builder: (context) => AlertDialog(
+                              title: const Text('Remove Exercise'),
+                              content: const Text(
+                                'Remove this exercise from the workout?',
+                              ),
+                              actions: [
+                                TextButton(
+                                  onPressed: () =>
+                                      Navigator.pop(context, false),
+                                  child: const Text('Cancel'),
+                                ),
+                                TextButton(
+                                  onPressed: () => Navigator.pop(context, true),
+                                  style: TextButton.styleFrom(
+                                    foregroundColor: Colors.red,
+                                  ),
+                                  child: const Text('Remove'),
+                                ),
+                              ],
+                            ),
+                          );
+
+                          if (confirmed == true) {
+                            viewModel.removeExercise(exercisePerf.exerciseId);
+                          }
+                        }
+                      : null,
                   isEditing: _isEditing,
                   onAddSet: _isEditing
                       ? () {
-                          // TODO: Show dialog to add set
+                          _showAddSetDialog(exercisePerf.exerciseId);
                         }
                       : null,
                 );
@@ -323,7 +321,6 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
       floatingActionButton: _isEditing
           ? FloatingActionButton(
               onPressed: () {
-                // Navigate to add exercise
                 Navigator.push(
                   context,
                   MaterialPageRoute(
@@ -335,7 +332,7 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
                 ).then((selectedExercises) {
                   if (selectedExercises != null && selectedExercises is List) {
                     for (final ex in selectedExercises) {
-                      ref.read(workoutSessionProvider.notifier).addExercise(ex);
+                      viewModel.addExercise(ex);
                     }
                   }
                 });
@@ -346,8 +343,131 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
     );
   }
 
-  String _formatDate(DateTime date) {
-    return '${date.day}/${date.month}/${date.year}';
+  void _showAddSetDialog(int exerciseId) {
+    final viewModel = ref.read(workoutDetailViewModelProvider(widget.workout));
+    final currentWorkout = viewModel.currentWorkout;
+    if (currentWorkout == null) return;
+
+    final exercisePerf = currentWorkout.exercises
+        .where((exercise) => exercise.exerciseId == exerciseId)
+        .toList();
+
+    if (exercisePerf.isEmpty) return;
+    final selectedExercisePerf = exercisePerf.first;
+
+    final type = selectedExercisePerf.exercise.performanceType;
+    final weightController = TextEditingController();
+    final repsController = TextEditingController();
+    final durationController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Add Set'),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (type == PerformanceType.weighted)
+                TextFormField(
+                  controller: weightController,
+                  decoration: const InputDecoration(
+                    labelText: 'Weight (kg)',
+                    border: OutlineInputBorder(),
+                    suffixText: 'kg',
+                  ),
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
+                ),
+              if (type == PerformanceType.weighted) const SizedBox(height: 12),
+              if (type != PerformanceType.duration)
+                TextFormField(
+                  controller: repsController,
+                  decoration: const InputDecoration(
+                    labelText: 'Reps',
+                    border: OutlineInputBorder(),
+                  ),
+                  keyboardType: TextInputType.number,
+                ),
+              if (type == PerformanceType.duration)
+                TextFormField(
+                  controller: durationController,
+                  decoration: const InputDecoration(
+                    labelText: 'Duration (seconds)',
+                    border: OutlineInputBorder(),
+                    suffixText: 'sec',
+                  ),
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
+                ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              final double? weight = weightController.text.isEmpty
+                  ? null
+                  : double.tryParse(weightController.text);
+              final int? reps = repsController.text.isEmpty
+                  ? null
+                  : int.tryParse(repsController.text);
+              final double? duration = durationController.text.isEmpty
+                  ? null
+                  : double.tryParse(durationController.text);
+
+              if (type == PerformanceType.weighted) {
+                if (weight == null || weight <= 0) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Invalid weight value')),
+                  );
+                  return;
+                }
+                if (reps == null || reps <= 0) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Invalid reps value')),
+                  );
+                  return;
+                }
+                viewModel.addSet(
+                  exerciseId,
+                  SetData.weighted(weight: weight, reps: reps),
+                );
+              } else if (type == PerformanceType.bodyweight) {
+                if (reps == null || reps <= 0) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Invalid reps value')),
+                  );
+                  return;
+                }
+                viewModel.addSet(exerciseId, SetData.bodyweight(reps: reps));
+              } else if (type == PerformanceType.duration) {
+                if (duration == null || duration <= 0) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Invalid duration value')),
+                  );
+                  return;
+                }
+                viewModel.addSet(
+                  exerciseId,
+                  SetData.duration(duration: duration),
+                );
+              }
+
+              Navigator.pop(context);
+            },
+            child: const Text('Add'),
+          ),
+        ],
+      ),
+    );
   }
 
   void _showUnsavedChangesDialog() {

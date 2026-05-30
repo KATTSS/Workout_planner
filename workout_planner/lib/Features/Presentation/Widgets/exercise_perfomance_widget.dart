@@ -1,5 +1,3 @@
-// lib/Features/Presentation/widgets/exercise_performance_widget.dart
-
 import 'package:flutter/material.dart';
 import 'package:workout_planner/Features/Domain/Entities/Performance/ex_perfomance.dart';
 import 'package:workout_planner/Features/Domain/Entities/Performance/set_data.dart';
@@ -8,6 +6,7 @@ class ExercisePerformanceWidget extends StatelessWidget {
   final ExercisePerformance exercisePerf;
   final VoidCallback onTap;
   final bool isEditing;
+  final VoidCallback? onLongPress;
   final VoidCallback? onAddSet;
 
   const ExercisePerformanceWidget({
@@ -15,6 +14,7 @@ class ExercisePerformanceWidget extends StatelessWidget {
     required this.exercisePerf,
     required this.onTap,
     this.isEditing = false,
+    this.onLongPress,
     this.onAddSet,
   });
 
@@ -26,6 +26,7 @@ class ExercisePerformanceWidget extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12),
       child: InkWell(
         onTap: onTap,
+        onLongPress: onLongPress,
         borderRadius: BorderRadius.circular(12),
         child: Padding(
           padding: const EdgeInsets.all(12),
@@ -53,7 +54,6 @@ class ExercisePerformanceWidget extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 8),
-              // Sets preview
               Wrap(
                 spacing: 8,
                 runSpacing: 8,

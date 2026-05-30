@@ -1,27 +1,23 @@
-// lib/Features/Presentation/screens/statistics_screen.dart
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:workout_planner/Features/Application/Providers/workout_providers.dart';
+import 'package:workout_planner/Features/Presentation/Viewmodels/statistics_viewmodel.dart';
 
 class StatisticsScreen extends ConsumerWidget {
   const StatisticsScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final statsAsync = ref.watch(statisticsProvider);
+    final viewModel = ref.watch(statisticsViewModelProvider);
+    final statsAsync = viewModel.statistics;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Statistics'),
-      ),
+      appBar: AppBar(title: const Text('Statistics')),
       body: statsAsync.when(
         data: (stats) => SingleChildScrollView(
           padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Total workouts
               _buildStatCard(
                 'Total Workouts',
                 '${stats.totalWorkouts}',
@@ -29,29 +25,33 @@ class StatisticsScreen extends ConsumerWidget {
                 Colors.blue,
               ),
               const SizedBox(height: 16),
-              // Average exercises per workout
               _buildStatCard(
                 'Average Exercises',
-                stats.averageExercisesPerWorkout.toStringAsFixed(1),
+                viewModel.getAverageExercisesString(
+                  stats.averageExercisesPerWorkout,
+                ),
                 Icons.format_list_numbered,
                 Colors.green,
               ),
               const SizedBox(height: 24),
-              // Most used muscle groups
               const Text(
                 'Most Used Muscle Groups',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
-              _buildHorizontalChart(stats.mostUsedMuscleGroups),
+              _buildHorizontalChart(
+                viewModel.getTopMuscleGroups(stats.mostUsedMuscleGroups),
+                viewModel.calculatePercentage,
+              ),
               const SizedBox(height: 24),
-              // Most frequent exercises
               const Text(
                 'Most Frequent Exercises',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
-              _buildExerciseList(stats.mostFrequentExercises),
+              _buildExerciseList(
+                viewModel.getTopExercises(stats.mostFrequentExercises),
+              ),
             ],
           ),
         ),
@@ -61,7 +61,12 @@ class StatisticsScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildStatCard(String title, String value, IconData icon, Color color) {
+  Widget _buildStatCard(
+    String title,
+    String value,
+    IconData icon,
+    Color color,
+  ) {
     return Card(
       elevation: 2,
       child: Container(
@@ -88,13 +93,13 @@ class StatisticsScreen extends ConsumerWidget {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  title,
-                  style: TextStyle(color: Colors.grey.shade600),
-                ),
+                Text(title, style: TextStyle(color: Colors.grey.shade600)),
                 Text(
                   value,
-                  style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ],
             ),
@@ -104,8 +109,11 @@ class StatisticsScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildHorizontalChart(Map<String, int> data) {
-    if (data.isEmpty) {
+  Widget _buildHorizontalChart(
+    List<MapEntry<String, int>> topEntries,
+    double Function(int value, int maxValue) calculatePercentage,
+  ) {
+    if (topEntries.isEmpty) {
       return const Card(
         child: Padding(
           padding: EdgeInsets.all(32),
@@ -114,13 +122,11 @@ class StatisticsScreen extends ConsumerWidget {
       );
     }
 
-    final sortedEntries = data.entries.toList()
-      ..sort((a, b) => b.value.compareTo(a.value));
-    final maxValue = sortedEntries.first.value;
+    final maxValue = topEntries.first.value;
 
     return Column(
-      children: sortedEntries.take(5).map((entry) {
-        final percentage = (entry.value / maxValue) * 100;
+      children: topEntries.map((entry) {
+        final percentage = calculatePercentage(entry.value, maxValue) * 100;
         return Padding(
           padding: const EdgeInsets.only(bottom: 12),
           child: Column(
@@ -129,13 +135,19 @@ class StatisticsScreen extends ConsumerWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(entry.key, style: const TextStyle(fontWeight: FontWeight.w500)),
-                  Text('${entry.value} times', style: TextStyle(color: Colors.grey.shade600)),
+                  Text(
+                    entry.key,
+                    style: const TextStyle(fontWeight: FontWeight.w500),
+                  ),
+                  Text(
+                    '${entry.value} times',
+                    style: TextStyle(color: Colors.grey.shade600),
+                  ),
                 ],
               ),
               const SizedBox(height: 4),
               LinearProgressIndicator(
-                value: percentage / 100,
+                value: calculatePercentage(entry.value, maxValue),
                 backgroundColor: Colors.grey.shade200,
                 color: Colors.blue,
                 minHeight: 8,
@@ -148,8 +160,8 @@ class StatisticsScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildExerciseList(Map<String, int> data) {
-    if (data.isEmpty) {
+  Widget _buildExerciseList(List<MapEntry<String, int>> topEntries) {
+    if (topEntries.isEmpty) {
       return const Card(
         child: Padding(
           padding: EdgeInsets.all(32),
@@ -158,21 +170,16 @@ class StatisticsScreen extends ConsumerWidget {
       );
     }
 
-    final sortedEntries = data.entries.toList()
-      ..sort((a, b) => b.value.compareTo(a.value));
-
     return Card(
       child: ListView.separated(
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
-        itemCount: sortedEntries.take(10).length,
+        itemCount: topEntries.length,
         separatorBuilder: (_, _) => const Divider(),
         itemBuilder: (context, index) {
-          final entry = sortedEntries[index];
+          final entry = topEntries[index];
           return ListTile(
-            leading: CircleAvatar(
-              child: Text('${index + 1}'),
-            ),
+            leading: CircleAvatar(child: Text('${index + 1}')),
             title: Text(entry.key),
             trailing: Text(
               '${entry.value} times',

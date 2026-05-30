@@ -313,15 +313,18 @@ class WorkoutStatistics {
   });
 
   static WorkoutStatistics calculate(List<Workout> workouts) {
+    final completedWorkouts = workouts
+        .where((workout) => workout.isCompleted)
+        .toList();
     final muscleGroups = <String, int>{};
     final exercises = <String, int>{};
     int totalExercises = 0;
 
-    for (final workout in workouts) {
+    for (final workout in completedWorkouts) {
       totalExercises += workout.exercises.length;
 
       for (final exPerf in workout.exercises) {
-        final muscleGroup = exPerf.exercise.muscle ?? 'Other';
+        final muscleGroup = exPerf.exercise.muscle;
         muscleGroups[muscleGroup] = (muscleGroups[muscleGroup] ?? 0) + 1;
 
         final exerciseName = exPerf.exercise.name;
@@ -332,10 +335,10 @@ class WorkoutStatistics {
     return WorkoutStatistics(
       mostUsedMuscleGroups: muscleGroups,
       mostFrequentExercises: exercises,
-      averageExercisesPerWorkout: workouts.isEmpty
+      averageExercisesPerWorkout: completedWorkouts.isEmpty
           ? 0
-          : totalExercises / workouts.length,
-      totalWorkouts: workouts.length,
+          : totalExercises / completedWorkouts.length,
+      totalWorkouts: completedWorkouts.length,
     );
   }
 }

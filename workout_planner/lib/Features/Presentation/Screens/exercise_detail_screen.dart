@@ -1,10 +1,11 @@
-// lib/Features/Presentation/screens/exercise_detail_screen.dart
-
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:workout_planner/Features/Domain/Entities/Performance/ex_perfomance.dart';
+import 'package:workout_planner/Features/Domain/Entities/Performance/performance_type.dart';
 import 'package:workout_planner/Features/Domain/Entities/Performance/set_data.dart';
+import 'package:workout_planner/Features/Presentation/Viewmodels/exercise_detail_viewmodel.dart';
 
-class ExerciseDetailScreen extends StatefulWidget {
+class ExerciseDetailScreen extends ConsumerStatefulWidget {
   final ExercisePerformance exercisePerf;
   final bool isEditing;
   final void Function(int setIndex, SetData newSet)? onSetChanged;
@@ -21,91 +22,112 @@ class ExerciseDetailScreen extends StatefulWidget {
   });
 
   @override
-  State<ExerciseDetailScreen> createState() => _ExerciseDetailScreenState();
+  ConsumerState<ExerciseDetailScreen> createState() =>
+      _ExerciseDetailScreenState();
 }
 
-class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
-  late List<SetData> _sets;
-  bool _hasChanges = false;
+class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
+  late final ExerciseDetailViewModelParams _params;
 
   @override
   void initState() {
     super.initState();
-    _sets = widget.exercisePerf.sets.toList();
-  }
 
-  String _getDifficultyString(int? difficulty) {
-    if (difficulty == null) return 'Not specified';
-    switch (difficulty) {
-      case 0:
-        return 'Beginner';
-      case 1:
-        return 'Intermediate';
-      case 2:
-        return 'Advanced';
-      default:
-        return 'Not specified';
-    }
-  }
-
-  void _updateSet(int index, SetData newSet) {
-    setState(() {
-      _sets[index] = newSet;
-      _hasChanges = true;
-    });
-    widget.onSetChanged?.call(index, newSet);
-  }
-
-  void _addSet() {
-    final exercise = widget.exercisePerf.exercise;
-    final newSet = SetData.empty(exercise.performanceType);
-    setState(() {
-      _sets.add(newSet);
-      _hasChanges = true;
-    });
-    widget.onSetAdded?.call(newSet);
-  }
-
-  void _removeSet(int index) {
-    setState(() {
-      _sets.removeAt(index);
-      _hasChanges = true;
-    });
-    widget.onSetRemoved?.call(index);
+    _params = ExerciseDetailViewModelParams(
+      exercisePerf: widget.exercisePerf,
+      isEditing: widget.isEditing,
+      onSetChanged: widget.onSetChanged,
+      onSetAdded: widget.onSetAdded,
+      onSetRemoved: widget.onSetRemoved,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final exercise = widget.exercisePerf.exercise;
+    final viewModel = ref.watch(exerciseDetailViewModelProvider(_params));
+
+    final exercise = viewModel.exercise;
 
     return Scaffold(
       appBar: AppBar(
         title: Text(exercise.name),
         actions: [
-          if (widget.isEditing && _hasChanges)
+          if (viewModel.isEditing && viewModel.hasChanges)
             TextButton(
-              onPressed: () => Navigator.pop(context, _sets),
+              onPressed: () {
+                //=>
+                final updatedPerf = ExercisePerformance.create(
+                  exercise: viewModel.exercise,
+                  sets: viewModel.getCurrentSets(),
+                );
+                Navigator.pop(
+                  context,
+                  updatedPerf,
+                ); //viewModel.getCurrentSets());
+              },
               child: const Text('Save'),
             ),
         ],
       ),
       body: Column(
         children: [
-          // Exercise details header
           Container(
             padding: const EdgeInsets.all(16),
             color: Colors.grey.shade50,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (exercise.description.isNotEmpty)
+                // if (exercise.description.isNotEmpty)
+                // Padding(
+                // padding: const EdgeInsets.only(bottom: 12),
+                //child: Text(
+                // exercise.description,
+                ///style: const TextStyle(fontSize: 14),
+                // ),
+                // ),
+                if (exercise.description.isNotEmpty) ...[
                   Padding(
                     padding: const EdgeInsets.only(bottom: 12),
-                    child: Text(
-                      exercise.description,
-                      style: const TextStyle(fontSize: 14),
-                    ),
+                    child: () {
+                      final steps = viewModel.getDescriptionFormated();
+                      if (steps.length == 1) {
+                        // Если только один шаг - показываем без нумерации
+                        return Text(
+                          steps.first,
+                          style: const TextStyle(fontSize: 14),
+                        );
+                      } else {
+                        // Если несколько шагов - показываем нумерованный список
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: steps.asMap().entries.map((entry) {
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 4),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    '${entry.key + 1}. ',
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  Expanded(
+                                    child: Text(
+                                      entry.value,
+                                      style: const TextStyle(fontSize: 14),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          }).toList(),
+                        );
+                      }
+                    }(),
                   ),
+                ],
                 Wrap(
                   spacing: 8,
                   runSpacing: 8,
@@ -113,7 +135,7 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
                     _buildInfoChip(Icons.fitness_center, exercise.muscle),
                     _buildInfoChip(
                       Icons.trending_up,
-                      _getDifficultyString(exercise.level),
+                      viewModel.getDifficultyString(),
                     ),
                     _buildInfoChip(Icons.category, exercise.category.name),
                   ],
@@ -131,7 +153,7 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          'Performance Type: ${_getPerformanceTypeString(exercise.performanceType)}',
+                          'Performance Type: ${viewModel.getPerformanceTypeString()}',
                           style: TextStyle(color: Colors.blue.shade700),
                         ),
                       ),
@@ -141,37 +163,40 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
               ],
             ),
           ),
-          // Sets list
           Expanded(
             child: ListView.builder(
               padding: const EdgeInsets.all(12),
-              itemCount: _sets.length,
+              itemCount: viewModel.sets.length,
               itemBuilder: (context, index) {
-                final set = _sets[index];
+                final set = viewModel.sets[index];
                 return Card(
                   margin: const EdgeInsets.only(bottom: 8),
                   child: ListTile(
                     leading: CircleAvatar(child: Text('${index + 1}')),
-                    title: Row(
-                      children: [Expanded(child: Text(_getSetInfo(set)))],
-                    ),
-                    trailing: widget.isEditing
+                    title: Text(viewModel.getSetInfo(set)),
+                    trailing: viewModel.isEditing
                         ? Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               IconButton(
                                 icon: const Icon(Icons.edit, size: 20),
-                                onPressed: () => _showEditSetDialog(index, set),
+                                onPressed: () => _showEditSetDialog(
+                                  context,
+                                  index,
+                                  set,
+                                  viewModel,
+                                ),
                               ),
                               IconButton(
                                 icon: const Icon(Icons.delete, size: 20),
-                                onPressed: () => _removeSet(index),
+                                onPressed: () => viewModel.removeSet(index),
                               ),
                             ],
                           )
                         : null,
-                    onTap: widget.isEditing
-                        ? () => _showEditSetDialog(index, set)
+                    onTap: viewModel.isEditing
+                        ? () =>
+                              _showEditSetDialog(context, index, set, viewModel)
                         : null,
                   ),
                 );
@@ -180,18 +205,13 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
           ),
         ],
       ),
-      floatingActionButton: widget.isEditing
+      floatingActionButton: viewModel.isEditing
           ? FloatingActionButton(
-              onPressed: _addSet,
+              onPressed: () => _showAddSetDialog(context, viewModel),
               child: const Icon(Icons.add),
             )
           : null,
     );
-  }
-
-  String _getSetInfo(SetData set) {
-    if (set.duration != null) return '${set.duration} sec';
-    return '${set.weight != null ? '${set.weight} kg' : '—'} × ${set.reps ?? '—'}';
   }
 
   Widget _buildInfoChip(IconData icon, String label) {
@@ -212,58 +232,265 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
     );
   }
 
-  String _getPerformanceTypeString(dynamic type) {
-    // Based on your PerformanceType enum
-    return type.toString().split('.').last;
+  void _showEditSetDialog(
+    BuildContext context,
+    int index,
+    SetData currentSet,
+    ExerciseDetailViewModel viewModel,
+  ) {
+    final exercise = viewModel.exercise;
+    final type = exercise.performanceType;
+
+    final weightController = TextEditingController(
+      text: currentSet.weight?.toString() ?? '',
+    );
+    final repsController = TextEditingController(
+      text: currentSet.reps?.toString() ?? '',
+    );
+    final durationController = TextEditingController(
+      text: currentSet.duration?.toString() ?? '',
+    );
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) {
+          return AlertDialog(
+            title: const Text('Edit Set'),
+            content: SizedBox(
+              width: double.maxFinite,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (type == PerformanceType.weighted) ...[
+                    TextFormField(
+                      controller: weightController,
+                      decoration: const InputDecoration(
+                        labelText: 'Weight (kg)',
+                        border: OutlineInputBorder(),
+                        suffixText: 'kg',
+                      ),
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: repsController,
+                      decoration: const InputDecoration(
+                        labelText: 'Reps',
+                        border: OutlineInputBorder(),
+                      ),
+                      keyboardType: TextInputType.number,
+                    ),
+                  ] else if (type == PerformanceType.bodyweight) ...[
+                    TextFormField(
+                      controller: repsController,
+                      decoration: const InputDecoration(
+                        labelText: 'Reps',
+                        border: OutlineInputBorder(),
+                      ),
+                      keyboardType: TextInputType.number,
+                    ),
+                  ] else if (type == PerformanceType.duration) ...[
+                    TextFormField(
+                      controller: durationController,
+                      decoration: const InputDecoration(
+                        labelText: 'Duration (seconds)',
+                        border: OutlineInputBorder(),
+                        suffixText: 'sec',
+                      ),
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 16),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancel'),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  final double? weight = weightController.text.isEmpty
+                      ? null
+                      : double.tryParse(weightController.text);
+                  final int? reps = repsController.text.isEmpty
+                      ? null
+                      : int.tryParse(repsController.text);
+                  final double? duration = durationController.text.isEmpty
+                      ? null
+                      : double.tryParse(durationController.text);
+
+                  if (type == PerformanceType.weighted) {
+                    if (weight == null || weight <= 0) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Invalid weight value')),
+                      );
+                      return;
+                    }
+                    if (reps == null || reps <= 0) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Invalid reps value')),
+                      );
+                      return;
+                    }
+                  } else if (type == PerformanceType.bodyweight) {
+                    if (reps == null || reps <= 0) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Invalid reps value')),
+                      );
+                      return;
+                    }
+                  } else if (type == PerformanceType.duration) {
+                    if (duration == null || duration <= 0) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Invalid duration value')),
+                      );
+                      return;
+                    }
+                  }
+
+                  final updatedSet = type == PerformanceType.weighted
+                      ? SetData.weighted(weight: weight!, reps: reps!)
+                      : type == PerformanceType.bodyweight
+                      ? SetData.bodyweight(reps: reps!)
+                      : SetData.duration(duration: duration!);
+
+                  viewModel.updateSet(index, updatedSet);
+                  Navigator.pop(context);
+                },
+                child: const Text('Save'),
+              ),
+            ],
+          );
+        },
+      ),
+    );
   }
 
-  void _showEditSetDialog(int index, SetData currentSet) {
-    final exercise = widget.exercisePerf.exercise;
+  void _showAddSetDialog(
+    BuildContext context,
+    ExerciseDetailViewModel viewModel,
+  ) {
+    final exercise = viewModel.exercise;
     final type = exercise.performanceType;
+
+    final weightController = TextEditingController();
+    final repsController = TextEditingController();
+    final durationController = TextEditingController();
 
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Edit Set'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (type.toString().contains('weight'))
-              TextFormField(
-                initialValue: currentSet.weight?.toString(),
-                decoration: const InputDecoration(labelText: 'Weight (kg)'),
-                keyboardType: TextInputType.number,
-                onChanged: (value) {
-                  // Handle change
-                },
-              ),
-            if (type.toString().contains('reps'))
-              TextFormField(
-                initialValue: currentSet.reps?.toString(),
-                decoration: const InputDecoration(labelText: 'Reps'),
-                keyboardType: TextInputType.number,
-              ),
-            if (type.toString().contains('duration'))
-              TextFormField(
-                initialValue: currentSet.duration?.toString(),
-                decoration: const InputDecoration(
-                  labelText: 'Duration (seconds)',
+        title: const Text('Add Set'),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (type == PerformanceType.weighted) ...[
+                TextFormField(
+                  controller: weightController,
+                  decoration: const InputDecoration(
+                    labelText: 'Weight (kg)',
+                    border: OutlineInputBorder(),
+                    suffixText: 'kg',
+                  ),
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
                 ),
-                keyboardType: TextInputType.number,
-              ),
-          ],
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: repsController,
+                  decoration: const InputDecoration(
+                    labelText: 'Reps',
+                    border: OutlineInputBorder(),
+                  ),
+                  keyboardType: TextInputType.number,
+                ),
+              ] else if (type == PerformanceType.bodyweight) ...[
+                TextFormField(
+                  controller: repsController,
+                  decoration: const InputDecoration(
+                    labelText: 'Reps',
+                    border: OutlineInputBorder(),
+                  ),
+                  keyboardType: TextInputType.number,
+                ),
+              ] else if (type == PerformanceType.duration) ...[
+                TextFormField(
+                  controller: durationController,
+                  decoration: const InputDecoration(
+                    labelText: 'Duration (seconds)',
+                    border: OutlineInputBorder(),
+                    suffixText: 'sec',
+                  ),
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
+                ),
+              ],
+            ],
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: const Text('Cancel'),
           ),
-          TextButton(
+          ElevatedButton(
             onPressed: () {
-              // Update set with new values
+              final double? weight = weightController.text.isEmpty
+                  ? null
+                  : double.tryParse(weightController.text);
+              final int? reps = repsController.text.isEmpty
+                  ? null
+                  : int.tryParse(repsController.text);
+              final double? duration = durationController.text.isEmpty
+                  ? null
+                  : double.tryParse(durationController.text);
+
+              if (type == PerformanceType.weighted) {
+                if (weight == null || weight <= 0) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Invalid weight value')),
+                  );
+                  return;
+                }
+                if (reps == null || reps <= 0) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Invalid reps value')),
+                  );
+                  return;
+                }
+                viewModel.addSet(SetData.weighted(weight: weight, reps: reps));
+              } else if (type == PerformanceType.bodyweight) {
+                if (reps == null || reps <= 0) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Invalid reps value')),
+                  );
+                  return;
+                }
+                viewModel.addSet(SetData.bodyweight(reps: reps));
+              } else if (type == PerformanceType.duration) {
+                if (duration == null || duration <= 0) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Invalid duration value')),
+                  );
+                  return;
+                }
+                viewModel.addSet(SetData.duration(duration: duration));
+              }
+
               Navigator.pop(context);
             },
-            child: const Text('Save'),
+            child: const Text('Add'),
           ),
         ],
       ),
