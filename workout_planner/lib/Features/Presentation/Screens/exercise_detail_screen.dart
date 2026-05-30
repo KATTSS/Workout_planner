@@ -77,14 +77,57 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (exercise.description.isNotEmpty)
+                // if (exercise.description.isNotEmpty)
+                // Padding(
+                // padding: const EdgeInsets.only(bottom: 12),
+                //child: Text(
+                // exercise.description,
+                ///style: const TextStyle(fontSize: 14),
+                // ),
+                // ),
+                if (exercise.description.isNotEmpty) ...[
                   Padding(
                     padding: const EdgeInsets.only(bottom: 12),
-                    child: Text(
-                      exercise.description,
-                      style: const TextStyle(fontSize: 14),
-                    ),
+                    child: () {
+                      final steps = viewModel.getDescriptionFormated();
+                      if (steps.length == 1) {
+                        // Если только один шаг - показываем без нумерации
+                        return Text(
+                          steps.first,
+                          style: const TextStyle(fontSize: 14),
+                        );
+                      } else {
+                        // Если несколько шагов - показываем нумерованный список
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: steps.asMap().entries.map((entry) {
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 4),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    '${entry.key + 1}. ',
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  Expanded(
+                                    child: Text(
+                                      entry.value,
+                                      style: const TextStyle(fontSize: 14),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          }).toList(),
+                        );
+                      }
+                    }(),
                   ),
+                ],
                 Wrap(
                   spacing: 8,
                   runSpacing: 8,

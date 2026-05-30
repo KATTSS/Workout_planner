@@ -1,5 +1,6 @@
 // lib/Features/Presentation/ViewModels/exercise_detail_viewmodel.dart
 
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:workout_planner/Features/Domain/Entities/Performance/ex_perfomance.dart';
@@ -49,6 +50,16 @@ class ExerciseDetailViewModel extends ChangeNotifier {
       default:
         return 'Not specified';
     }
+  }
+
+  // Получение списка действий для выполнения упражнений
+  List<String> getDescriptionFormated() {
+    RegExp regex = RegExp(r"'([^']*)'");
+    List<String> descriptions = regex
+        .allMatches(_exercisePerf.exercise.description)
+        .map((match) => match.group(1) ?? '')
+        .toList();
+    return descriptions;
   }
 
   // Получение информации о сете (UI логика)
