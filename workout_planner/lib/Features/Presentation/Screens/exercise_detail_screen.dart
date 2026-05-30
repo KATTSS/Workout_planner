@@ -54,8 +54,17 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
         actions: [
           if (viewModel.isEditing && viewModel.hasChanges)
             TextButton(
-              onPressed: () =>
-                  Navigator.pop(context, viewModel.getCurrentSets()),
+              onPressed: () {
+                //=>
+                final updatedPerf = ExercisePerformance.create(
+                  exercise: viewModel.exercise,
+                  sets: viewModel.getCurrentSets(),
+                );
+                Navigator.pop(
+                  context,
+                  updatedPerf,
+                ); //viewModel.getCurrentSets());
+              },
               child: const Text('Save'),
             ),
         ],

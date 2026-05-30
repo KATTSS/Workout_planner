@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:workout_planner/Features/Domain/Entities/excercise.dart';
 import 'package:workout_planner/Features/Domain/Entities/Performance/ex_perfomance.dart';
 import 'package:workout_planner/Features/Presentation/Screens/exercise_detail_screen.dart';
 import 'package:workout_planner/Features/Presentation/Viewmodels/exercise_catalog_viewmodel.dart';
@@ -21,7 +20,8 @@ class ExerciseCatalogScreen extends ConsumerStatefulWidget {
 }
 
 class _ExerciseCatalogScreenState extends ConsumerState<ExerciseCatalogScreen> {
-  final Set<Exercise> _selectedExercises = {};
+  // final Set<Exercise> _selectedExercises = {};
+  final Map<int, ExercisePerformance> _selectedExercises = {};
   bool _showFilters = false;
 
   @override
@@ -53,8 +53,9 @@ class _ExerciseCatalogScreenState extends ConsumerState<ExerciseCatalogScreen> {
               _selectedExercises.isNotEmpty)
             TextButton(
               onPressed: () {
-                final exercisePerformances = viewModel
-                    .createExercisePerformances(_selectedExercises);
+                final exercisePerformances = _selectedExercises.values.toList();
+                // viewModel
+                //     .createExercisePerformances(_selectedExercises);
                 Navigator.pop(context, exercisePerformances);
               },
               child: Text('Add (${_selectedExercises.length})'),
@@ -72,7 +73,10 @@ class _ExerciseCatalogScreenState extends ConsumerState<ExerciseCatalogScreen> {
                 itemCount: filteredExercises.length,
                 itemBuilder: (context, index) {
                   final exercise = filteredExercises[index];
-                  final isSelected = _selectedExercises.contains(exercise);
+                  final isSelected = _selectedExercises.containsKey(
+                    exercise.id,
+                  );
+                  // _selectedExercises.contains(exercise);
 
                   return Card(
                     margin: const EdgeInsets.only(bottom: 8),
@@ -99,30 +103,81 @@ class _ExerciseCatalogScreenState extends ConsumerState<ExerciseCatalogScreen> {
                             viewModel.isAddingToWorkout) {
                           setState(() {
                             if (isSelected) {
-                              _selectedExercises.remove(exercise);
+                              // _selectedExercises.remove(exercise);
+                              _selectedExercises.remove(exercise.id);
                             } else {
-                              _selectedExercises.add(exercise);
+                              _selectedExercises[exercise.id] =
+                                  ExercisePerformance.create(
+                                    exercise: exercise,
+                                    sets: [],
+                                  );
+                              // _selectedExercises.add(exercise);
                             }
                           });
                         }
                       },
                       trailing: IconButton(
                         icon: const Icon(Icons.chevron_right),
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => ExerciseDetailScreen(
-                                exercisePerf: ExercisePerformance.create(
-                                  exercise: exercise,
-                                  sets: [],
+                        onPressed: () async {
+                          final existingPerf = _selectedExercises[exercise.id];
+                          final result =
+                              await Navigator.push<ExercisePerformance>(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => ExerciseDetailScreen(
+                                    exercisePerf:
+                                        existingPerf ??
+                                        ExercisePerformance.create(
+                                          exercise: exercise,
+                                          sets: [],
+                                        ),
+                                    // exercisePerf: ExercisePerformance.create(
+                                    //   exercise: exercise,
+                                    //   sets: [],
+                                    // ),
+                                    isEditing: true,
+                                  ),
                                 ),
-                                isEditing: true,
-                              ),
-                            ),
-                          );
+                              );
+
+                          // Если вернули результат с сетами - автоматически добавляем
+                          if (result != null && result.sets.isNotEmpty) {
+                            setState(() {
+                              _selectedExercises[exercise.id] = result;
+                            });
+
+                            // Показываем уведомление
+                            if (mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    '${exercise.name} added with ${result.sets.length} set(s)',
+                                  ),
+                                  duration: const Duration(seconds: 1),
+                                ),
+                              );
+                            }
+                          }
                         },
                       ),
+                      // trailing: IconButton(
+                      //   icon: const Icon(Icons.chevron_right),
+                      //   onPressed: () {
+                      //     Navigator.push(
+                      //       context,
+                      //       MaterialPageRoute(
+                      //         builder: (_) => ExerciseDetailScreen(
+                      //           exercisePerf: ExercisePerformance.create(
+                      //             exercise: exercise,
+                      //             sets: [],
+                      //           ),
+                      //           isEditing: true,
+                      //         ),
+                      //       ),
+                      //     );
+
+                      //   },
+                      // ),
                     ),
                   );
                 },
