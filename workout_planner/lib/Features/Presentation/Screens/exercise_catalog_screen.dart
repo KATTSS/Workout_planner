@@ -20,7 +20,6 @@ class ExerciseCatalogScreen extends ConsumerStatefulWidget {
 }
 
 class _ExerciseCatalogScreenState extends ConsumerState<ExerciseCatalogScreen> {
-  // final Set<Exercise> _selectedExercises = {};
   final Map<int, ExercisePerformance> _selectedExercises = {};
   bool _showFilters = false;
 
@@ -54,8 +53,6 @@ class _ExerciseCatalogScreenState extends ConsumerState<ExerciseCatalogScreen> {
             TextButton(
               onPressed: () {
                 final exercisePerformances = _selectedExercises.values.toList();
-                // viewModel
-                //     .createExercisePerformances(_selectedExercises);
                 Navigator.pop(context, exercisePerformances);
               },
               child: Text('Add (${_selectedExercises.length})'),
@@ -76,7 +73,6 @@ class _ExerciseCatalogScreenState extends ConsumerState<ExerciseCatalogScreen> {
                   final isSelected = _selectedExercises.containsKey(
                     exercise.id,
                   );
-                  // _selectedExercises.contains(exercise);
 
                   return Card(
                     margin: const EdgeInsets.only(bottom: 8),
@@ -103,7 +99,6 @@ class _ExerciseCatalogScreenState extends ConsumerState<ExerciseCatalogScreen> {
                             viewModel.isAddingToWorkout) {
                           setState(() {
                             if (isSelected) {
-                              // _selectedExercises.remove(exercise);
                               _selectedExercises.remove(exercise.id);
                             } else {
                               _selectedExercises[exercise.id] =
@@ -111,7 +106,6 @@ class _ExerciseCatalogScreenState extends ConsumerState<ExerciseCatalogScreen> {
                                     exercise: exercise,
                                     sets: [],
                                   );
-                              // _selectedExercises.add(exercise);
                             }
                           });
                         }
@@ -131,22 +125,16 @@ class _ExerciseCatalogScreenState extends ConsumerState<ExerciseCatalogScreen> {
                                           exercise: exercise,
                                           sets: [],
                                         ),
-                                    // exercisePerf: ExercisePerformance.create(
-                                    //   exercise: exercise,
-                                    //   sets: [],
-                                    // ),
                                     isEditing: true,
                                   ),
                                 ),
                               );
 
-                          // Если вернули результат с сетами - автоматически добавляем
                           if (result != null && result.sets.isNotEmpty) {
                             setState(() {
                               _selectedExercises[exercise.id] = result;
                             });
 
-                            // Показываем уведомление
                             if (mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
@@ -160,24 +148,6 @@ class _ExerciseCatalogScreenState extends ConsumerState<ExerciseCatalogScreen> {
                           }
                         },
                       ),
-                      // trailing: IconButton(
-                      //   icon: const Icon(Icons.chevron_right),
-                      //   onPressed: () {
-                      //     Navigator.push(
-                      //       context,
-                      //       MaterialPageRoute(
-                      //         builder: (_) => ExerciseDetailScreen(
-                      //           exercisePerf: ExercisePerformance.create(
-                      //             exercise: exercise,
-                      //             sets: [],
-                      //           ),
-                      //           isEditing: true,
-                      //         ),
-                      //       ),
-                      //     );
-
-                      //   },
-                      // ),
                     ),
                   );
                 },
