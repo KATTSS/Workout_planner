@@ -119,6 +119,12 @@ class WorkoutDetailViewModel {
     _ref.read(workoutSessionProvider.notifier).removeExercise(exerciseId);
   }
 
+  void reorderExercises(int oldIndex, int newIndex) {
+    _ref
+        .read(workoutSessionProvider.notifier)
+        .reorderExercises(oldIndex, newIndex);
+  }
+
   // Управление сетами
   void addSet(int exerciseId, SetData set) {
     _ref.read(workoutSessionProvider.notifier).addSet(exerciseId, set);

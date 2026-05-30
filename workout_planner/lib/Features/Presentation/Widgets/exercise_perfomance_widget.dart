@@ -8,6 +8,7 @@ class ExercisePerformanceWidget extends StatelessWidget {
   final bool isEditing;
   final VoidCallback? onLongPress;
   final VoidCallback? onAddSet;
+  final VoidCallback? onDeleteExercise;
 
   const ExercisePerformanceWidget({
     super.key,
@@ -16,6 +17,7 @@ class ExercisePerformanceWidget extends StatelessWidget {
     this.isEditing = false,
     this.onLongPress,
     this.onAddSet,
+    this.onDeleteExercise,
   });
 
   @override
@@ -44,13 +46,24 @@ class ExercisePerformanceWidget extends StatelessWidget {
                       ),
                     ),
                   ),
-                  if (isEditing && onAddSet != null)
-                    IconButton(
-                      icon: const Icon(Icons.add_circle_outline, size: 24),
-                      onPressed: onAddSet,
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
-                    ),
+                  if (isEditing) ...[
+                    if (onDeleteExercise != null)
+                      IconButton(
+                        icon: const Icon(Icons.delete, size: 20),
+                        onPressed: onDeleteExercise,
+                        tooltip: 'Remove exercise',
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                      ),
+                    const SizedBox(width: 8),
+                    if (onAddSet != null)
+                      IconButton(
+                        icon: const Icon(Icons.add_circle_outline, size: 24),
+                        onPressed: onAddSet,
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                      ),
+                  ],
                 ],
               ),
               const SizedBox(height: 8),
@@ -71,7 +84,7 @@ class ExercisePerformanceWidget extends StatelessWidget {
                     ),
                     child: Text(
                       _formatSet(set),
-                      style: TextStyle(fontSize: 12),
+                      style: const TextStyle(fontSize: 12),
                     ),
                   );
                 }).toList(),

@@ -219,102 +219,207 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
             ),
           ),
           Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.all(12),
-              itemCount: workout.exercises.length,
-              itemBuilder: (context, index) {
-                final exercisePerf = workout.exercises[index];
-                return ExercisePerformanceWidget(
-                  exercisePerf: exercisePerf,
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => ExerciseDetailScreen(
+            child: _isEditing
+                ? ReorderableListView.builder(
+                    padding: const EdgeInsets.all(12),
+                    itemCount: workout.exercises.length,
+                    onReorder: (oldIndex, newIndex) {
+                      viewModel.reorderExercises(oldIndex, newIndex);
+                    },
+                    itemBuilder: (context, index) {
+                      final exercisePerf = workout.exercises[index];
+                      return Container(
+                        key: ValueKey(exercisePerf.exerciseId),
+                        child: ExercisePerformanceWidget(
                           exercisePerf: exercisePerf,
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => ExerciseDetailScreen(
+                                  exercisePerf: exercisePerf,
+                                  isEditing: _isEditing,
+                                  onSetChanged: _isEditing
+                                      ? (setIndex, newSet) {
+                                          viewModel.updateSet(
+                                            exercisePerf.exerciseId,
+                                            setIndex,
+                                            newSet,
+                                          );
+                                        }
+                                      : null,
+                                  onSetAdded: _isEditing
+                                      ? (newSet) {
+                                          viewModel.addSet(
+                                            exercisePerf.exerciseId,
+                                            newSet,
+                                          );
+                                        }
+                                      : null,
+                                  onSetRemoved: _isEditing
+                                      ? (setIndex) {
+                                          viewModel.removeSet(
+                                            exercisePerf.exerciseId,
+                                            setIndex,
+                                          );
+                                        }
+                                      : null,
+                                ),
+                              ),
+                            ).then((result) {
+                              if (result != null && result is List<SetData>) {
+                                final updated = ExercisePerformance.create(
+                                  exercise: exercisePerf.exercise,
+                                  sets: result.cast<SetData>(),
+                                );
+                                viewModel.session!.replaceExercise(
+                                  exercisePerf.exerciseId,
+                                  updated,
+                                );
+                              }
+                            });
+                          },
                           isEditing: _isEditing,
-                          onSetChanged: _isEditing
-                              ? (setIndex, newSet) {
-                                  viewModel.updateSet(
-                                    exercisePerf.exerciseId,
-                                    setIndex,
-                                    newSet,
-                                  );
+                          onAddSet: _isEditing
+                              ? () {
+                                  _showAddSetDialog(exercisePerf.exerciseId);
                                 }
                               : null,
-                          onSetAdded: _isEditing
-                              ? (newSet) {
-                                  viewModel.addSet(
-                                    exercisePerf.exerciseId,
-                                    newSet,
+                          onDeleteExercise: _isEditing
+                              ? () async {
+                                  final confirmed = await showDialog<bool>(
+                                    context: context,
+                                    builder: (context) => AlertDialog(
+                                      title: const Text('Remove Exercise'),
+                                      content: const Text(
+                                        'Remove this exercise from the workout?',
+                                      ),
+                                      actions: [
+                                        TextButton(
+                                          onPressed: () =>
+                                              Navigator.pop(context, false),
+                                          child: const Text('Cancel'),
+                                        ),
+                                        TextButton(
+                                          onPressed: () =>
+                                              Navigator.pop(context, true),
+                                          style: TextButton.styleFrom(
+                                            foregroundColor: Colors.red,
+                                          ),
+                                          child: const Text('Remove'),
+                                        ),
+                                      ],
+                                    ),
                                   );
-                                }
-                              : null,
-                          onSetRemoved: _isEditing
-                              ? (setIndex) {
-                                  viewModel.removeSet(
-                                    exercisePerf.exerciseId,
-                                    setIndex,
-                                  );
+
+                                  if (confirmed == true) {
+                                    viewModel.removeExercise(
+                                      exercisePerf.exerciseId,
+                                    );
+                                  }
                                 }
                               : null,
                         ),
-                      ),
-                    ).then((result) {
-                      // If the detail screen returned an updated sets list on save,
-                      // replace the exercise in the session so UI stays in sync.
-                      if (result != null && result is List<SetData>) {
-                        final updated = ExercisePerformance.create(
-                          exercise: exercisePerf.exercise,
-                          sets: result.cast<SetData>(),
-                        );
-                        viewModel.session!.replaceExercise(
-                          exercisePerf.exerciseId,
-                          updated,
-                        );
-                      }
-                    });
-                  },
-                  onLongPress: _isEditing
-                      ? () async {
-                          final confirmed = await showDialog<bool>(
-                            context: context,
-                            builder: (context) => AlertDialog(
-                              title: const Text('Remove Exercise'),
-                              content: const Text(
-                                'Remove this exercise from the workout?',
+                      );
+                    },
+                  )
+                : ListView.builder(
+                    padding: const EdgeInsets.all(12),
+                    itemCount: workout.exercises.length,
+                    itemBuilder: (context, index) {
+                      final exercisePerf = workout.exercises[index];
+                      return ExercisePerformanceWidget(
+                        exercisePerf: exercisePerf,
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => ExerciseDetailScreen(
+                                exercisePerf: exercisePerf,
+                                isEditing: _isEditing,
+                                onSetChanged: _isEditing
+                                    ? (setIndex, newSet) {
+                                        viewModel.updateSet(
+                                          exercisePerf.exerciseId,
+                                          setIndex,
+                                          newSet,
+                                        );
+                                      }
+                                    : null,
+                                onSetAdded: _isEditing
+                                    ? (newSet) {
+                                        viewModel.addSet(
+                                          exercisePerf.exerciseId,
+                                          newSet,
+                                        );
+                                      }
+                                    : null,
+                                onSetRemoved: _isEditing
+                                    ? (setIndex) {
+                                        viewModel.removeSet(
+                                          exercisePerf.exerciseId,
+                                          setIndex,
+                                        );
+                                      }
+                                    : null,
                               ),
-                              actions: [
-                                TextButton(
-                                  onPressed: () =>
-                                      Navigator.pop(context, false),
-                                  child: const Text('Cancel'),
-                                ),
-                                TextButton(
-                                  onPressed: () => Navigator.pop(context, true),
-                                  style: TextButton.styleFrom(
-                                    foregroundColor: Colors.red,
-                                  ),
-                                  child: const Text('Remove'),
-                                ),
-                              ],
                             ),
-                          );
+                          ).then((result) {
+                            if (result != null && result is List<SetData>) {
+                              final updated = ExercisePerformance.create(
+                                exercise: exercisePerf.exercise,
+                                sets: result.cast<SetData>(),
+                              );
+                              viewModel.session!.replaceExercise(
+                                exercisePerf.exerciseId,
+                                updated,
+                              );
+                            }
+                          });
+                        },
+                        isEditing: _isEditing,
+                        onAddSet: _isEditing
+                            ? () {
+                                _showAddSetDialog(exercisePerf.exerciseId);
+                              }
+                            : null,
+                        onDeleteExercise: _isEditing
+                            ? () async {
+                                final confirmed = await showDialog<bool>(
+                                  context: context,
+                                  builder: (context) => AlertDialog(
+                                    title: const Text('Remove Exercise'),
+                                    content: const Text(
+                                      'Remove this exercise from the workout?',
+                                    ),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () =>
+                                            Navigator.pop(context, false),
+                                        child: const Text('Cancel'),
+                                      ),
+                                      TextButton(
+                                        onPressed: () =>
+                                            Navigator.pop(context, true),
+                                        style: TextButton.styleFrom(
+                                          foregroundColor: Colors.red,
+                                        ),
+                                        child: const Text('Remove'),
+                                      ),
+                                    ],
+                                  ),
+                                );
 
-                          if (confirmed == true) {
-                            viewModel.removeExercise(exercisePerf.exerciseId);
-                          }
-                        }
-                      : null,
-                  isEditing: _isEditing,
-                  onAddSet: _isEditing
-                      ? () {
-                          _showAddSetDialog(exercisePerf.exerciseId);
-                        }
-                      : null,
-                );
-              },
-            ),
+                                if (confirmed == true) {
+                                  viewModel.removeExercise(
+                                    exercisePerf.exerciseId,
+                                  );
+                                }
+                              }
+                            : null,
+                      );
+                    },
+                  ),
           ),
         ],
       ),
