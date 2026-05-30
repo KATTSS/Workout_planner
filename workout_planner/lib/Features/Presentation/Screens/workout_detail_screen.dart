@@ -160,7 +160,9 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
                               context: context,
                               initialDate: _selectedDate,
                               firstDate: DateTime(2020),
-                              lastDate: DateTime.now(),
+                              lastDate: DateTime.now().add(
+                                const Duration(days: 30),
+                              ),
                             );
                             if (date != null) {
                               setState(() => _selectedDate = date);
@@ -209,12 +211,31 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
                           style: TextStyle(color: Colors.grey),
                         ),
                 ),
-                if (_isEditing)
-                  SwitchListTile(
-                    title: const Text('Mark as completed'),
-                    value: workout.isCompleted,
-                    onChanged: viewModel.toggleCompleted,
-                  ),
+                if (_isEditing) ...{
+                  () {
+                    final now = DateTime.now();
+                    final today = DateTime(now.year, now.month, now.day);
+                    final workoutDate = DateTime(
+                      workout.date.year,
+                      workout.date.month,
+                      workout.date.day,
+                    );
+                    final isFuture = workoutDate.isAfter(today);
+
+                    return SwitchListTile(
+                      title: const Text('Mark as completed'),
+                      value: workout.isCompleted,
+                      onChanged: isFuture
+                          ? null
+                          : (val) => viewModel.toggleCompleted(val),
+                      subtitle: isFuture
+                          ? const Text(
+                              'Cannot mark a future workout as completed',
+                            )
+                          : null,
+                    );
+                  }(),
+                },
               ],
             ),
           ),

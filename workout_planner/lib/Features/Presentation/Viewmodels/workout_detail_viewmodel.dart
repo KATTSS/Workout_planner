@@ -103,6 +103,21 @@ class WorkoutDetailViewModel {
 
   // Изменение статуса завершения
   void toggleCompleted(bool isCompleted) {
+    final current = session?.currentWorkout;
+    if (isCompleted && current != null) {
+      final now = DateTime.now();
+      final today = DateTime(now.year, now.month, now.day);
+      final workoutDate = DateTime(
+        current.date.year,
+        current.date.month,
+        current.date.day,
+      );
+      if (workoutDate.isAfter(today)) {
+        // Do not allow marking a future-dated workout as completed
+        return;
+      }
+    }
+
     if (isCompleted) {
       _ref.read(workoutSessionProvider.notifier).completeWorkout();
     } else {
