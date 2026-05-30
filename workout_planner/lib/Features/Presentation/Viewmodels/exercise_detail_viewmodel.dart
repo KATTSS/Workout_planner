@@ -99,10 +99,10 @@ class ExerciseDetailViewModel extends ChangeNotifier {
 
 // Провайдер для ViewModel (требует параметры)
 final exerciseDetailViewModelProvider =
-    Provider.family<ExerciseDetailViewModel, ExerciseDetailViewModelParams>((
-      ref,
-      params,
-    ) {
+    ChangeNotifierProvider.family<
+      ExerciseDetailViewModel,
+      ExerciseDetailViewModelParams
+    >((ref, params) {
       return ExerciseDetailViewModel(
         exercisePerf: params.exercisePerf,
         isEditing: params.isEditing,
