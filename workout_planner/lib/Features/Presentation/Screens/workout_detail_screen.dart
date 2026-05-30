@@ -4,6 +4,7 @@ import 'package:workout_planner/Features/Domain/Entities/Workout/workout.dart';
 import 'package:workout_planner/Features/Presentation/Screens/exercise_catalog_screen.dart';
 import 'package:workout_planner/Features/Presentation/Screens/exercise_detail_screen.dart';
 import 'package:workout_planner/Features/Domain/Entities/Performance/ex_perfomance.dart';
+import 'package:workout_planner/Features/Domain/Entities/Performance/performance_type.dart';
 import 'package:workout_planner/Features/Domain/Entities/Performance/set_data.dart';
 import 'package:workout_planner/Features/Presentation/Viewmodels/workout_detail_viewmodel.dart';
 import 'package:workout_planner/Features/Presentation/Widgets/exercise_perfomance_widget.dart';
@@ -97,7 +98,6 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final viewModel = ref.watch(workoutDetailViewModelProvider(widget.workout));
-    final sessionState = viewModel.sessionState;
     final workout = viewModel.currentWorkout;
     final hasUnsavedChanges = viewModel.hasUnsavedChanges;
 
@@ -344,11 +344,68 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
   }
 
   void _showAddSetDialog(int exerciseId) {
+    final viewModel = ref.read(workoutDetailViewModelProvider(widget.workout));
+    final currentWorkout = viewModel.currentWorkout;
+    if (currentWorkout == null) return;
+
+    final exercisePerf = currentWorkout.exercises
+        .where((exercise) => exercise.exerciseId == exerciseId)
+        .toList();
+
+    if (exercisePerf.isEmpty) return;
+    final selectedExercisePerf = exercisePerf.first;
+
+    final type = selectedExercisePerf.exercise.performanceType;
+    final weightController = TextEditingController();
+    final repsController = TextEditingController();
+    final durationController = TextEditingController();
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Add Set'),
-        content: const Text('Set dialog implementation'),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (type == PerformanceType.weighted)
+                TextFormField(
+                  controller: weightController,
+                  decoration: const InputDecoration(
+                    labelText: 'Weight (kg)',
+                    border: OutlineInputBorder(),
+                    suffixText: 'kg',
+                  ),
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
+                ),
+              if (type == PerformanceType.weighted) const SizedBox(height: 12),
+              if (type != PerformanceType.duration)
+                TextFormField(
+                  controller: repsController,
+                  decoration: const InputDecoration(
+                    labelText: 'Reps',
+                    border: OutlineInputBorder(),
+                  ),
+                  keyboardType: TextInputType.number,
+                ),
+              if (type == PerformanceType.duration)
+                TextFormField(
+                  controller: durationController,
+                  decoration: const InputDecoration(
+                    labelText: 'Duration (seconds)',
+                    border: OutlineInputBorder(),
+                    suffixText: 'sec',
+                  ),
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
+                ),
+            ],
+          ),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -356,6 +413,54 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
           ),
           ElevatedButton(
             onPressed: () {
+              final double? weight = weightController.text.isEmpty
+                  ? null
+                  : double.tryParse(weightController.text);
+              final int? reps = repsController.text.isEmpty
+                  ? null
+                  : int.tryParse(repsController.text);
+              final double? duration = durationController.text.isEmpty
+                  ? null
+                  : double.tryParse(durationController.text);
+
+              if (type == PerformanceType.weighted) {
+                if (weight == null || weight <= 0) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Invalid weight value')),
+                  );
+                  return;
+                }
+                if (reps == null || reps <= 0) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Invalid reps value')),
+                  );
+                  return;
+                }
+                viewModel.addSet(
+                  exerciseId,
+                  SetData.weighted(weight: weight, reps: reps),
+                );
+              } else if (type == PerformanceType.bodyweight) {
+                if (reps == null || reps <= 0) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Invalid reps value')),
+                  );
+                  return;
+                }
+                viewModel.addSet(exerciseId, SetData.bodyweight(reps: reps));
+              } else if (type == PerformanceType.duration) {
+                if (duration == null || duration <= 0) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Invalid duration value')),
+                  );
+                  return;
+                }
+                viewModel.addSet(
+                  exerciseId,
+                  SetData.duration(duration: duration),
+                );
+              }
+
               Navigator.pop(context);
             },
             child: const Text('Add'),

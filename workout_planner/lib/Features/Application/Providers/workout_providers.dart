@@ -80,7 +80,10 @@ final exerciseCatalogProvider = FutureProvider<List<Exercise>>((ref) async {
 });
 
 // Поиск упражнений с дебаунсом
-final exerciseSearchProvider = FutureProvider.family<List<Exercise>, String>((ref, query) async {
+final exerciseSearchProvider = FutureProvider.family<List<Exercise>, String>((
+  ref,
+  query,
+) async {
   if (query.isEmpty) return [];
   final exerciseRepo = ref.watch(exerciseRepoProvider);
   return await exerciseRepo.getByName(query);
@@ -88,25 +91,33 @@ final exerciseSearchProvider = FutureProvider.family<List<Exercise>, String>((re
 
 // ============ Workout Session State ============
 
-final workoutSessionProvider = StateNotifierProvider<WorkoutSessionNotifier, WorkoutSessionState>((ref) {
-  return WorkoutSessionNotifier();
-});
+final workoutSessionProvider =
+    StateNotifierProvider<WorkoutSessionNotifier, WorkoutSessionState>((ref) {
+      return WorkoutSessionNotifier();
+    });
 
 // ============ Workout Builder ============
 
-final workoutBuilderProvider = StateNotifierProvider<WorkoutBuilderNotifier, WorkoutBuilderState>((ref) {
-  return WorkoutBuilderNotifier();
-});
+final workoutBuilderProvider =
+    StateNotifierProvider<WorkoutBuilderNotifier, WorkoutBuilderState>((ref) {
+      return WorkoutBuilderNotifier();
+    });
 
 // ============ Exercise Filters ============
 
-final exerciseFiltersProvider = StateNotifierProvider<ExerciseFiltersNotifier, ExerciseFiltersState>((ref) {
-  return ExerciseFiltersNotifier();
-});
+final exerciseFiltersProvider =
+    StateNotifierProvider<ExerciseFiltersNotifier, ExerciseFiltersState>((ref) {
+      return ExerciseFiltersNotifier();
+    });
 
 // ============ Statistics ============
 
+final workoutHistoryChangeProvider = StateProvider<int>((ref) {
+  return 0;
+});
+
 final statisticsProvider = FutureProvider<WorkoutStatistics>((ref) async {
+  ref.watch(workoutHistoryChangeProvider);
   final historyRepo = ref.watch(historyRepoProvider);
   final workouts = await historyRepo.getAll(limit: null, newestFirst: false);
   return WorkoutStatistics.calculate(workouts);
@@ -114,7 +125,10 @@ final statisticsProvider = FutureProvider<WorkoutStatistics>((ref) async {
 
 // ============ Workout by ID ============
 
-final workoutByIdProvider = FutureProvider.family<Workout?, int>((ref, id) async {
+final workoutByIdProvider = FutureProvider.family<Workout?, int>((
+  ref,
+  id,
+) async {
   final historyRepo = ref.watch(historyRepoProvider);
   return await historyRepo.getWorkout(id);
 });

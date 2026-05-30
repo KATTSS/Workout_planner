@@ -19,6 +19,8 @@ class HomeViewModel {
     final deleteWorkout = _ref.read(deleteWorkoutProvider);
     try {
       await deleteWorkout(workoutId);
+
+      _ref.read(workoutHistoryChangeProvider.notifier).state++;
       return true;
     } catch (e) {
       return false;

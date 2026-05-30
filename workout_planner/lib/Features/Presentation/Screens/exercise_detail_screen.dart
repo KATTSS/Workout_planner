@@ -210,7 +210,7 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  if (type == PerformanceType.weighted)
+                  if (type == PerformanceType.weighted) ...[
                     TextFormField(
                       controller: weightController,
                       decoration: const InputDecoration(
@@ -218,19 +218,29 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
                         border: OutlineInputBorder(),
                         suffixText: 'kg',
                       ),
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: repsController,
+                      decoration: const InputDecoration(
+                        labelText: 'Reps',
+                        border: OutlineInputBorder(),
+                      ),
                       keyboardType: TextInputType.number,
                     ),
-                  if (type == PerformanceType.bodyweight)
-                    const SizedBox(height: 12),
-                  TextFormField(
-                    controller: repsController,
-                    decoration: const InputDecoration(
-                      labelText: 'Reps',
-                      border: OutlineInputBorder(),
+                  ] else if (type == PerformanceType.bodyweight) ...[
+                    TextFormField(
+                      controller: repsController,
+                      decoration: const InputDecoration(
+                        labelText: 'Reps',
+                        border: OutlineInputBorder(),
+                      ),
+                      keyboardType: TextInputType.number,
                     ),
-                    keyboardType: TextInputType.number,
-                  ),
-                  if (type == PerformanceType.duration)
+                  ] else if (type == PerformanceType.duration) ...[
                     TextFormField(
                       controller: durationController,
                       decoration: const InputDecoration(
@@ -238,8 +248,11 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
                         border: OutlineInputBorder(),
                         suffixText: 'sec',
                       ),
-                      keyboardType: TextInputType.number,
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
                     ),
+                  ],
                   const SizedBox(height: 16),
                 ],
               ),
@@ -261,38 +274,40 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
                       ? null
                       : double.tryParse(durationController.text);
 
-                  if (type == PerformanceType.weighted &&
-                      weight == null &&
-                      weightController.text.isNotEmpty) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Invalid weight value')),
-                    );
-                    return;
+                  if (type == PerformanceType.weighted) {
+                    if (weight == null || weight <= 0) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Invalid weight value')),
+                      );
+                      return;
+                    }
+                    if (reps == null || reps <= 0) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Invalid reps value')),
+                      );
+                      return;
+                    }
+                  } else if (type == PerformanceType.bodyweight) {
+                    if (reps == null || reps <= 0) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Invalid reps value')),
+                      );
+                      return;
+                    }
+                  } else if (type == PerformanceType.duration) {
+                    if (duration == null || duration <= 0) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Invalid duration value')),
+                      );
+                      return;
+                    }
                   }
 
-                  if (type == PerformanceType.bodyweight &&
-                      reps == null &&
-                      repsController.text.isNotEmpty) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Invalid reps value')),
-                    );
-                    return;
-                  }
-
-                  if (type == PerformanceType.duration &&
-                      duration == null &&
-                      durationController.text.isNotEmpty) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Invalid duration value')),
-                    );
-                    return;
-                  }
-
-                  final updatedSet = SetData(
-                    weight: weight,
-                    reps: reps,
-                    duration: duration,
-                  );
+                  final updatedSet = type == PerformanceType.weighted
+                      ? SetData.weighted(weight: weight!, reps: reps!)
+                      : type == PerformanceType.bodyweight
+                      ? SetData.bodyweight(reps: reps!)
+                      : SetData.duration(duration: duration!);
 
                   viewModel.updateSet(index, updatedSet);
                   Navigator.pop(context);
@@ -326,7 +341,7 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              if (type == PerformanceType.weighted)
+              if (type == PerformanceType.weighted) ...[
                 TextFormField(
                   controller: weightController,
                   decoration: const InputDecoration(
@@ -334,19 +349,29 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
                     border: OutlineInputBorder(),
                     suffixText: 'kg',
                   ),
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: repsController,
+                  decoration: const InputDecoration(
+                    labelText: 'Reps',
+                    border: OutlineInputBorder(),
+                  ),
                   keyboardType: TextInputType.number,
                 ),
-              if (type == PerformanceType.bodyweight)
-                const SizedBox(height: 12),
-              TextFormField(
-                controller: repsController,
-                decoration: const InputDecoration(
-                  labelText: 'Reps',
-                  border: OutlineInputBorder(),
+              ] else if (type == PerformanceType.bodyweight) ...[
+                TextFormField(
+                  controller: repsController,
+                  decoration: const InputDecoration(
+                    labelText: 'Reps',
+                    border: OutlineInputBorder(),
+                  ),
+                  keyboardType: TextInputType.number,
                 ),
-                keyboardType: TextInputType.number,
-              ),
-              if (type == PerformanceType.duration)
+              ] else if (type == PerformanceType.duration) ...[
                 TextFormField(
                   controller: durationController,
                   decoration: const InputDecoration(
@@ -354,8 +379,11 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
                     border: OutlineInputBorder(),
                     suffixText: 'sec',
                   ),
-                  keyboardType: TextInputType.number,
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
                 ),
+              ],
             ],
           ),
         ),
@@ -376,13 +404,38 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
                   ? null
                   : double.tryParse(durationController.text);
 
-              final newSet = SetData(
-                weight: weight,
-                reps: reps,
-                duration: duration,
-              );
+              if (type == PerformanceType.weighted) {
+                if (weight == null || weight <= 0) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Invalid weight value')),
+                  );
+                  return;
+                }
+                if (reps == null || reps <= 0) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Invalid reps value')),
+                  );
+                  return;
+                }
+                viewModel.addSet(SetData.weighted(weight: weight, reps: reps));
+              } else if (type == PerformanceType.bodyweight) {
+                if (reps == null || reps <= 0) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Invalid reps value')),
+                  );
+                  return;
+                }
+                viewModel.addSet(SetData.bodyweight(reps: reps));
+              } else if (type == PerformanceType.duration) {
+                if (duration == null || duration <= 0) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Invalid duration value')),
+                  );
+                  return;
+                }
+                viewModel.addSet(SetData.duration(duration: duration));
+              }
 
-              viewModel.addSet(newSet);
               Navigator.pop(context);
             },
             child: const Text('Add'),

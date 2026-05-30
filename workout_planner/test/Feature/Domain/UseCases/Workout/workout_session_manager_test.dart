@@ -59,8 +59,8 @@ void main() {
       expect(customManager.maxHistorySize, 10);
     });
 
-    test('should initialize with default maxHistorySize (50)', () {
-      expect(sessionManager.maxHistorySize, 50);
+    test('should initialize with default maxHistorySize (10)', () {
+      expect(sessionManager.maxHistorySize, 10);
     });
   });
 
@@ -72,11 +72,10 @@ void main() {
       expect(sessionManager.isModified, true);
     });
 
-    test('should clear future history after update', () {
+    test('should preserve cancelled history after later update', () {
       sessionManager.updateState(updatedWorkout1);
       sessionManager.updateState(updatedWorkout2);
 
-      sessionManager.undo();
       sessionManager.undo();
 
       final newWorkout = Workout(
@@ -88,8 +87,12 @@ void main() {
       );
       sessionManager.updateState(newWorkout);
 
-      expect(sessionManager.canRedo, false);
       expect(sessionManager.currentWorkout, newWorkout);
+      expect(sessionManager.canRedo, false);
+
+      sessionManager.undo();
+      expect(sessionManager.currentWorkout, updatedWorkout2);
+      expect(sessionManager.canRedo, true);
     });
 
     test('should add to history on update', () {
@@ -286,57 +289,63 @@ void main() {
     test('should handle adding exercises in session', () {
       var workout = sessionManager.currentWorkout;
       final newExercise = PerformanceTestData.createDurationRunning();
-      
+
       final updatedExercises = [...workout.exercises, newExercise];
       final newWorkout = workout.copyWith(exercises: updatedExercises);
-      
+
       sessionManager.updateState(newWorkout);
-      
-      expect(sessionManager.currentWorkout.exercises.length, 
-             initialWorkout.exercises.length + 1);
+
+      expect(
+        sessionManager.currentWorkout.exercises.length,
+        initialWorkout.exercises.length + 1,
+      );
       expect(sessionManager.isModified, true);
     });
 
     test('should handle removing exercises in session', () {
       var workout = sessionManager.currentWorkout;
-      
+
       final updatedExercises = workout.exercises
           .where((ex) => ex.exercise.name != 'Bench Press')
           .toList();
       final newWorkout = workout.copyWith(exercises: updatedExercises);
-      
+
       sessionManager.updateState(newWorkout);
-      
-      expect(sessionManager.currentWorkout.exercises.length, 
-             initialWorkout.exercises.length - 1);
+
+      expect(
+        sessionManager.currentWorkout.exercises.length,
+        initialWorkout.exercises.length - 1,
+      );
       expect(sessionManager.isModified, true);
     });
 
     test('should handle updating exercise sets', () {
       var workout = sessionManager.currentWorkout;
       final firstExercise = workout.exercises.first;
-      
+
       final newSet = SetData.weighted(weight: 80.0, reps: 5);
       final updatedExercise = firstExercise.addSet(newSet);
-      
+
       final updatedExercises = workout.exercises.map((ex) {
         return ex.exerciseId == firstExercise.exerciseId ? updatedExercise : ex;
       }).toList();
-      
+
       final newWorkout = workout.copyWith(exercises: updatedExercises);
       sessionManager.updateState(newWorkout);
-      
-      expect(sessionManager.currentWorkout.exercises.first.setsCount, 
-             firstExercise.setsCount + 1);
+
+      expect(
+        sessionManager.currentWorkout.exercises.first.setsCount,
+        firstExercise.setsCount + 1,
+      );
       expect(sessionManager.isModified, true);
     });
 
     test('should handle changing workout status', () {
       var workout = sessionManager.currentWorkout;
       final completedWorkout = workout.copyWith(isCompleted: true);
-      
+
       sessionManager.updateState(completedWorkout);
-      
+
       expect(sessionManager.currentWorkout.isCompleted, true);
       expect(sessionManager.isModified, true);
     });
@@ -346,9 +355,9 @@ void main() {
       final newDate = DateTime(2024, 1, 20);
       const newNotes = 'Updated date';
       final updatedWorkout = workout.copyWith(date: newDate, notes: newNotes);
-      
+
       sessionManager.updateState(updatedWorkout);
-      
+
       expect(sessionManager.currentWorkout.date, newDate);
       expect(sessionManager.currentWorkout.notes, newNotes);
       expect(sessionManager.isModified, true);
@@ -358,68 +367,73 @@ void main() {
       var workout = sessionManager.currentWorkout;
       final newExercise = PerformanceTestData.createBodyweightPushUp();
       final exerciseToReplace = workout.exercises.first;
-      
+
       final updatedExercises = workout.exercises.map((ex) {
         return ex.exerciseId == exerciseToReplace.exerciseId ? newExercise : ex;
       }).toList();
-      
+
       final newWorkout = workout.copyWith(exercises: updatedExercises);
       sessionManager.updateState(newWorkout);
-      
-      expect(sessionManager.currentWorkout.exercises.first.exerciseId, 
-             newExercise.exerciseId);
+
+      expect(
+        sessionManager.currentWorkout.exercises.first.exerciseId,
+        newExercise.exerciseId,
+      );
       expect(sessionManager.isModified, true);
     });
 
     test('should handle reordering exercises in session', () {
       var workout = sessionManager.currentWorkout;
-      
-      final updatedExercises = [
-        workout.exercises[1],
-        workout.exercises[0],
-      ];
-      
+
+      final updatedExercises = [workout.exercises[1], workout.exercises[0]];
+
       final newWorkout = workout.copyWith(exercises: updatedExercises);
       sessionManager.updateState(newWorkout);
-      
-      expect(sessionManager.currentWorkout.exercises[0].exerciseId, 
-             workout.exercises[1].exerciseId);
-      expect(sessionManager.currentWorkout.exercises[1].exerciseId, 
-             workout.exercises[0].exerciseId);
+
+      expect(
+        sessionManager.currentWorkout.exercises[0].exerciseId,
+        workout.exercises[1].exerciseId,
+      );
+      expect(
+        sessionManager.currentWorkout.exercises[1].exerciseId,
+        workout.exercises[0].exerciseId,
+      );
       expect(sessionManager.isModified, true);
     });
 
     test('should handle multiple operations in sequence', () {
       var workout = sessionManager.currentWorkout;
-            
+
       final newExercise = PerformanceTestData.createDurationRunning();
       var updatedExercises = [...workout.exercises, newExercise];
       workout = workout.copyWith(exercises: updatedExercises);
       sessionManager.updateState(workout);
-      
+
       expect(sessionManager.currentWorkout.exercises.length, 3);
-      
+
       workout = sessionManager.currentWorkout.copyWith(isCompleted: true);
       sessionManager.updateState(workout);
-      
+
       expect(sessionManager.currentWorkout.isCompleted, true);
-      
-      workout = sessionManager.currentWorkout.copyWith(notes: 'Completed with notes');
+
+      workout = sessionManager.currentWorkout.copyWith(
+        notes: 'Completed with notes',
+      );
       sessionManager.updateState(workout);
-      
+
       expect(sessionManager.currentWorkout.notes, 'Completed with notes');
       expect(sessionManager.isModified, true);
-      
+
       sessionManager.undo();
       expect(sessionManager.currentWorkout.isCompleted, true);
       expect(sessionManager.currentWorkout.notes, 'Initial workout');
-      
+
       sessionManager.undo();
       expect(sessionManager.currentWorkout.exercises.length, 3);
       expect(sessionManager.currentWorkout.isCompleted, false);
     });
   });
-  
+
   group('Edge cases', () {
     test('should handle multiple saves and modifications', () {
       sessionManager.updateState(updatedWorkout1);
