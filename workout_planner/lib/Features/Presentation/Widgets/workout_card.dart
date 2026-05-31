@@ -35,8 +35,9 @@ class WorkoutCard extends StatelessWidget {
     final workoutDate = DateTime(date.year, date.month, date.day);
 
     if (workoutDate == today) return 'Today';
-    if (workoutDate == today.subtract(const Duration(days: 1))) return 'Yesterday';
-    
+    if (workoutDate == today.subtract(const Duration(days: 1)))
+      return 'Yesterday';
+
     return '${date.day}/${date.month}/${date.year}';
   }
 
@@ -70,7 +71,10 @@ class WorkoutCard extends StatelessWidget {
                   ),
                   const Spacer(),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.grey.shade200,
                       borderRadius: BorderRadius.circular(12),
@@ -89,10 +93,7 @@ class WorkoutCard extends StatelessWidget {
                 const SizedBox(height: 8),
                 Text(
                   workout.notes!,
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey.shade600,
-                  ),
+                  style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -100,7 +101,10 @@ class WorkoutCard extends StatelessWidget {
               const SizedBox(height: 8),
               Row(
                 children: [
-                  _buildStat(Icons.fitness_center, '${workout.exercises.length} exercises'),
+                  _buildStat(
+                    Icons.fitness_center,
+                    '${workout.exercises.length} exercises',
+                  ),
                   const SizedBox(width: 16),
                   _buildStat(Icons.repeat, '${_getTotalSets()} sets'),
                 ],
@@ -117,10 +121,7 @@ class WorkoutCard extends StatelessWidget {
       children: [
         Icon(icon, size: 16, color: Colors.grey.shade600),
         const SizedBox(width: 4),
-        Text(
-          text,
-          style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
-        ),
+        Text(text, style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
       ],
     );
   }
