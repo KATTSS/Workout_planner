@@ -99,6 +99,50 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     }
   }
 
+  Future<void> _showWorkoutActionsMenu(Workout workout) async {
+    final viewModel = ref.read(homeViewModelProvider);
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Workout Options'),
+        content: const Text('What would you like to do?'),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _deleteWorkout(workout);
+            },
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Delete'),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(context);
+
+              // Copy the workout
+              final copiedWorkout = await viewModel.copyWorkout(workout);
+
+              if (copiedWorkout != null && mounted) {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => WorkoutDetailScreen(workout: copiedWorkout),
+                  ),
+                ).then((_) => _loadWorkouts());
+              } else if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Failed to copy workout')),
+                );
+              }
+            },
+            child: const Text('Copy Workout'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -162,7 +206,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         ),
                       ).then((_) => _loadWorkouts());
                     },
-                    onLongPress: () => _deleteWorkout(workout),
+                    onLongPress: () => _showWorkoutActionsMenu(workout),
                   );
                 },
               ),

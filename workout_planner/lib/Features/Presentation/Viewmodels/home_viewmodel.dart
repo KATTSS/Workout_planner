@@ -56,6 +56,34 @@ class HomeViewModel {
     }
   }
 
+  Future<Workout?> copyWorkout(Workout workoutToCopy) async {
+    try {
+      final workoutBuilder = _ref.read(workoutBuilderProvider.notifier);
+      final createWorkout = _ref.read(createWorkoutProvider);
+
+      workoutBuilder.reset();
+
+      final now = DateTime.now();
+      final newId = now.millisecondsSinceEpoch ~/ 1000;
+
+      workoutBuilder.setId(newId);
+      workoutBuilder.setDate(DateTime.now());
+      // Copy all exercises from the original workout
+      workoutBuilder.addExercises(workoutToCopy.exercises);
+      workoutBuilder.markAsDraft();
+
+      final newWorkout = workoutBuilder.build();
+
+      final savedId = await createWorkout(newWorkout);
+
+      workoutBuilder.reset();
+
+      return newWorkout.copyWith(id: savedId);
+    } catch (e) {
+      return null;
+    }
+  }
+
   String formatDate(DateTime date) {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
