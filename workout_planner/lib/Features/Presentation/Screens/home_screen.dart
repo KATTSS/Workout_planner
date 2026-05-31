@@ -4,6 +4,7 @@ import 'package:workout_planner/Features/Domain/Entities/Workout/workout.dart';
 import 'package:workout_planner/Features/Domain/Entities/Performance/ex_perfomance.dart';
 import 'package:workout_planner/Features/Presentation/Screens/workout_detail_screen.dart';
 import 'package:workout_planner/Features/Presentation/Screens/statistics_screen.dart';
+import 'package:workout_planner/Features/Presentation/Screens/user_screen.dart';
 import 'package:workout_planner/Features/Presentation/Screens/exercise_catalog_screen.dart';
 import 'package:workout_planner/Features/Presentation/Viewmodels/home_viewmodel.dart';
 import 'package:workout_planner/Features/Presentation/Widgets/workout_card.dart';
@@ -120,7 +121,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             onPressed: () async {
               Navigator.pop(context);
 
-              // Copy the workout
               final copiedWorkout = await viewModel.copyWorkout(workout);
 
               if (copiedWorkout != null && mounted) {
@@ -149,6 +149,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       appBar: AppBar(
         title: const Text('Workout Planner'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.person),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const UserScreen()),
+              );
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.bar_chart),
             onPressed: () {
