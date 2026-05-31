@@ -1,0 +1,217 @@
+@startuml Planer 
+skinparam classAttributeIconSize 0
+
+class Exercise {
+  +int id
+  +String name
+  +int level
+  +ExerciseCategory category
+  +Equipment equipment
+  +String description
+  +String muscle
+  +String secondaryMuscle
+  +PerformanceType getPerformanceType()
+}
+
+class Workout {
+  +int id
+  +DateTime date
+  +List<ExercisePerformance> exercises
+  +bool isCompleted
+  +String? notes
+  +String getPrimaryMuscleGroup()
+  +int getTotalSets()
+}
+
+class SetData {
+  +double? weight
+  +int? reps
+  +double? duration
+  +bool isValidFor(PerformanceType type)
+}
+
+interface ExercisePerformance {
+  +int exerciseId
+  +Exercise exercise
+  +int getSetsCount()
+  +List<SetData> getSets()
+  +ExercisePerformance addSet(SetData set)
+  +ExercisePerformance removeSet(int setIndex)
+  +ExercisePerformance updateSet(int setIndex, SetData newSet)
+  +T accept(ExercisePerformanceVisitor<T> visitor)
+  +static ExercisePerformance create(Exercise exercise, List<SetData> sets)
+}
+
+class WeightedExercisePerformance
+class BodyweightExercisePerformance
+class DurationExercisePerformance
+
+interface ExercisePerformanceVisitor<T>
+
+class WorkoutSession {
+  +Workout getCurrentWorkout()
+  +void addExercise(ExercisePerformance exercise)
+  +void removeExercise(int exerciseId)
+  +void addSetToExercise(int exerciseId, SetData set)
+  +bool undo()
+  +bool redo()
+}
+
+class WorkoutSessionManager {
+  +Workout currentWorkout
+  +bool canUndo
+  +bool canRedo
+  +void updateState(Workout newWorkout)
+  +bool undo()
+  +bool redo()
+}
+
+class WorkoutStatusManager {
+  +Workout updateDate(Workout workout, DateTime newDate)
+  +Workout updateNotes(Workout workout, String? newNotes)
+  +Workout markAsCompleted(Workout workout)
+}
+
+class ManageWorkoutExercises {
+  +Workout addExercise(Workout workout, ExercisePerformance exercise)
+  +Workout removeExercise(Workout workout, int exerciseId)
+}
+
+class SetManagement {
+  +Workout addSet(Workout workout, int exerciseId, SetData set)
+  +Workout updateSet(Workout workout, int exerciseId, int setIndex, SetData newSet)
+}
+
+class WorkoutBuilder {
+  +Workout build()
+  +Workout buildFromTemplate(Workout template, DateTime newDate)
+}
+
+class CreateWorkout
+class SaveWorkout
+class DeleteWorkout
+class GetWorkoutHistory
+class StatisticsManager
+
+interface IExerciseRepo
+interface IHistoryRepo
+class ExerciseRepo
+class HistoryRepo
+
+class ExerciseModel
+class UserHistModel
+class ExerciseMapper
+class WorkoutMapper
+
+Exercise <|-- ExercisePerformance
+ExercisePerformance <|-- WeightedExercisePerformance
+ExercisePerformance <|-- BodyweightExercisePerformance
+ExercisePerformance <|-- DurationExercisePerformance
+ExercisePerformance o-- SetData
+Workout "1" o-- "*" ExercisePerformance
+WorkoutSession --> WorkoutSessionManager
+WorkoutSession --> WorkoutStatusManager
+WorkoutSession --> ManageWorkoutExercises
+WorkoutSession --> SetManagement
+WorkoutBuilder --> Workout
+CreateWorkout --> IHistoryRepo
+SaveWorkout --> IHistoryRepo
+DeleteWorkout --> IHistoryRepo
+GetWorkoutHistory --> IHistoryRepo
+StatisticsManager --> Workout
+ExerciseRepo --> IExerciseRepo
+ExerciseRepo --> ExerciseDb
+HistoryRepo --> IHistoryRepo
+HistoryRepo --> ILocalWorkoutDataSource
+HistoryRepo --> ExerciseRepo
+WorkoutMapper --> Workout
+ExerciseMapper --> Exercise
+UserHistModel --> Workout
+ExerciseModel --> Exercise
+
+@enduml
+
+@startuml planerGroups
+skinparam componentStyle uml2
+
+package Presentation {
+  [MyApp / main.dart]
+  [HomeScreen]
+  [ExerciseCatalogScreen]
+  [WorkoutDetailScreen]
+  [ExerciseDetailScreen]
+  [StatisticsScreen]
+  [WorkoutCard]
+  [ExercisePerformanceWidget]
+  [HomeViewModel]
+  [ExerciseCatalogViewModel]
+  [WorkoutDetailViewModel]
+  [ExerciseDetailViewModel]
+  [StatisticsViewModel]
+}
+
+package Application {
+  [Providers / Riverpod]
+  [WorkoutSessionNotifier]
+  [WorkoutBuilderNotifier]
+  [ExerciseFiltersNotifier]
+  [FutureProvider / StateProvider]
+}
+
+package Domain {
+  [Entities]
+  [UseCases]
+  [Repository Interfaces]
+  [Managers]
+}
+
+package Data {
+  [ExerciseDb]
+  [UserHistDb]
+  [LocalWorkoutDataSource]
+  [ExerciseRepo]
+  [HistoryRepo]
+  [ExerciseMapper]
+  [WorkoutMapper]
+  [QueryBuilder]
+}
+
+package External {
+  [SQLite DB]
+  [assets/excercise_data.db]
+  [assets/db_init.sql]
+}
+
+[MyApp / main.dart] --> [HomeScreen]
+[MyApp / main.dart] --> [Providers / Riverpod]
+[HomeScreen] --> [HomeViewModel]
+[ExerciseCatalogScreen] --> [ExerciseCatalogViewModel]
+[WorkoutDetailScreen] --> [WorkoutDetailViewModel]
+[ExerciseDetailScreen] --> [ExerciseDetailViewModel]
+[StatisticsScreen] --> [StatisticsViewModel]
+
+[Providers / Riverpod] --> [WorkoutSessionNotifier]
+[Providers / Riverpod] --> [WorkoutBuilderNotifier]
+[Providers / Riverpod] --> [ExerciseFiltersNotifier]
+[Providers / Riverpod] --> [FutureProvider / StateProvider]
+[Providers / Riverpod] --> [ExerciseRepo]
+[Providers / Riverpod] --> [HistoryRepo]
+
+[UseCases] --> [Repository Interfaces]
+[UseCases] --> [Managers]
+[Managers] --> [Entities]
+[ExerciseRepo] --> [IExerciseRepo]
+[HistoryRepo] --> [IHistoryRepo]
+[ExerciseRepo] --> [ExerciseDb]
+[HistoryRepo] --> [LocalWorkoutDataSource]
+[LocalWorkoutDataSource] --> [UserHistDb]
+[ExerciseDb] --> [assets/excercise_data.db]
+[UserHistDb] --> [assets/db_init.sql]
+[HistoryRepo] --> [WorkoutMapper]
+[ExerciseRepo] --> [ExerciseMapper]
+[Entities] --> [Workout]
+[Entities] --> [Exercise]
+[Entities] --> [ExercisePerformance]
+[Entities] --> [SetData]
+
+@enduml

@@ -1,0 +1,589 @@
+@startuml WorkoutPlanerClassesAndLayers
+!theme plain
+skinparam classAttributeIconSize 0
+skinparam classFontSize 10
+skinparam classBackgroundColor white
+skinparam classBorderColor #2C3E50
+skinparam backgroundColor #FEF9E6
+skinparam componentStyle rectangle
+
+title Workout Planner 
+
+' === DOMAIN LAYER ===
+package "Domain Layer" #E8F8F5 {
+  
+  class Workout {
+    + int id
+    + DateTime date
+    + List<ExercisePerformance> exercises
+    + bool isCompleted
+    + String? notes
+    + String get primaryMuscleGroup
+    + Set<String> get involvedMuscleGroups
+    + int get totalSets
+    + int get exerciseCount
+    + copyWith()
+  }
+
+  class Exercise {
+    + int id
+    + String name
+    + int level
+    + ExerciseCategory category
+    + Equipment equipment
+    + String description
+    + String muscle
+    + String secondaryMuscle
+    + PerformanceType get performanceType
+  }
+
+  enum ExerciseCategory {
+    strength
+    bodyweight
+    cardio
+    stretching
+    plyometrics
+    strongman
+    powerlifting
+    olympicWeightlifting
+    + bool requiresWeight
+    + bool isTimed
+  }
+
+  enum Equipment {
+    bodyOnly
+    machine
+    other
+    foamRoll
+    kettlebells
+    dumbbell
+    cable
+    barbell
+    bands
+    medicineBall
+    exerciseBall
+    eZCurlBar
+    + bool isBodyweight
+    + fromString()
+  }
+
+  abstract class ExercisePerformance {
+    + int exerciseId
+    + Exercise exercise
+    + int get setsCount
+    + List<SetData> get sets
+    + double? getWeightForSet()
+    + int? getRepsForSet()
+    + double? getDurationForSet()
+    + addSet()
+    + removeSet()
+    + updateSet()
+    + {static} create()
+  }
+
+  class WeightedExercisePerformance {
+    - List<SetData> _sets
+    + double totalVolume
+  }
+
+  class BodyweightExercisePerformance {
+    - List<SetData> _sets
+    + int totalReps
+  }
+
+  class DurationExercisePerformance {
+    - List<SetData> _sets
+    + double totalDuration
+  }
+
+  class SetData {
+    + final double? weight
+    + final int? reps
+    + final double? duration
+    + isValidFor()
+    + empty()
+    + factory weighted()
+    + factory bodyweight()
+    + factory duration()
+  }
+
+  enum PerformanceType {
+    weighted
+    bodyweight
+    duration
+    + fromExercise()
+  }
+
+  class WorkoutSession {
+    - WorkoutSessionManager _stateManager
+    - WorkoutStatusManager _statusManagement
+    - ManageWorkoutExercises _exerciseManagement
+    - SetManagement _setManagement
+    + Workout get currentWorkout
+    + bool canUndo
+    + bool canRedo
+    + bool isModified
+    + updateDate()
+    + updateNotes()
+    + completeWorkout()
+    + uncompleteWorkout()
+    + addExercise()
+    + removeExercise()
+    + replaceExercise()
+    + reorderExercises()
+    + addSetToExercise()
+    + updateSetInExercise()
+    + removeSetFromExercise()
+    + undo()
+    + redo()
+    + markAsSaved()
+  }
+
+  class WorkoutSessionManager {
+    - Workout _currentWorkout
+    - List<Workout> _history
+    - int _historyIndex
+    - final int maxHistorySize
+    - bool _isModified
+    + void updateState()
+    + void markAsSaved()
+    + bool undo()
+    + bool redo()
+  }
+
+  class WorkoutStatusManager {
+    - final DateTime Function() _dateTimeProvider
+    + updateDate()
+    + updateNotes()
+    + markAsCompleted()
+    + markAsDraft()
+  }
+
+  class ManageWorkoutExercises {
+    + addExercise()
+    + removeExercise()
+    + reorderExercises()
+    + replaceExercise()
+  }
+
+  class SetManagement {
+    + addSet()
+    + updateSet()
+    + removeSet()
+  }
+
+  class WorkoutBuilder {
+    - int? _id
+    - DateTime? _date
+    - List<ExercisePerformance> _exercises
+    - String? _notes
+    - bool _isCompleted
+    - bool _isBuilt
+    + setId()
+    + setDate()
+    + addExercise()
+    + addExercises()
+    + removeExercise()
+    + setNotes()
+    + asCompleted()
+    + asDraft()
+    + build()
+    + buildFromTemplate()
+    + reset()
+  }
+
+  interface IHistoryRepo {
+    + Future<int> saveWorkout()
+    + Future<Workout?> getWorkout()
+    + Future<void> deleteWorkout()
+    + Future<void> updateWorkout()
+    + Future<List<Workout>> getByDate()
+    + Future<List<Workout>> getBeforeDate()
+    + Future<List<Workout>> getAfterDate()
+    + Future<List<Workout>> getAll()
+  }
+
+  interface IExerciseRepo {
+    + Future<Exercise?> getById()
+    + Future<List<Exercise>> getByIds()
+    + Future<List<Exercise>> getByLevel()
+    + Future<List<Exercise>> getByCategory()
+    + Future<List<Exercise>> getByName()
+    + Future<List<Exercise>> getAll()
+    + Future<List<Exercise>> getByMuscleGroup()
+  }
+
+  class CreateWorkout {
+    + Future<int> call()
+  }
+
+  class SaveWorkout {
+    + Future<int> call()
+  }
+
+  class DeleteWorkout {
+    + Future<void> call()
+  }
+
+  class GetWorkoutHistory {
+    + Future<List<Workout>> getRecentWorkouts()
+  }
+}
+
+' === DATA LAYER ===
+package "Data Layer" #E8F0FE {
+  
+  class ExerciseModel {
+    + int id
+    + String name
+    + int level
+    + String category
+    + String equipment
+    + String description
+    + String primaryMusclesList
+    + String? secondaryMusclesList
+    + fromMap()
+  }
+
+  class UserHistModel {
+    + int id
+    + String date
+    + String muscleGroup
+    + bool isDone
+    + String? notes
+    + fromMap()
+    + toMap()
+  }
+
+  class ExerciseMapper {
+    + {static} toDomain()
+  }
+
+  class WorkoutMapper {
+    + {static} toModel()
+    + {static} toDomain()
+    + {static} assembleExercise()
+    + {static} mapToSetData()
+  }
+
+  class HistoryRepo {
+    - ILocalWorkoutDataSource _workoutDataSource
+    - IExerciseRepo _exerciseRepo
+    + saveWorkout()
+    + getWorkout()
+    + updateWorkout()
+    + deleteWorkout()
+    + getByDate()
+    + getBeforeDate()
+    + getAfterDate()
+    + getAll()
+  }
+
+  class ExerciseRepo {
+    - ExerciseDb _db
+    + getById()
+    + getByIds()
+    + getByLevel()
+    + getByCategory()
+    + getByName()
+    + getAll()
+    + getByMuscleGroup()
+  }
+
+  interface ILocalWorkoutDataSource {
+    + insertWorkout()
+    + insertWorkoutExercise()
+    + insertExerciseSet()
+    + updateWorkout()
+    + deleteWorkoutExercises()
+    + deleteExerciseSetsByWorkout()
+    + deleteWorkout()
+    + getWorkoutById()
+    + getWorkoutExercises()
+    + getExerciseSets()
+    + getExerciseSetsForWorkout()
+    + queryWorkouts()
+  }
+
+  class LocalWorkoutDataSource {
+    - UserHistDb _db
+  }
+
+  class UserHistDb {
+    - Database? _db
+    - bool _isInitialized
+    + {static} instance
+    + Future<Database> get database
+    + init()
+    + executeQuery()
+    + executeQuerySingle()
+    + executeCommand()
+  }
+
+  class ExerciseDb {
+    - Database? _db
+    - final String _assetPath
+    - bool _isInitialized
+    + {static} instance
+    + Future<Database> get database
+    + executeQuery()
+    + executeQuerySingle()
+  }
+
+  class QueryBuilder {
+    - String? _table
+    - List<String> _selectColumns
+    - List<String> _whereConditions
+    - List<dynamic> _whereArgs
+    - List<String> _orderByColumns
+    - int? _limit
+    - Map<String,dynamic>? _values
+    - QueryType _type
+    + select()
+    + insert()
+    + update()
+    + delete()
+    + from()
+    + where()
+    + whereRaw()
+    + orderBy()
+    + limit()
+    + String build()
+    + List<dynamic> get args
+    + reset()
+  }
+
+  enum QueryType {
+    select
+    insert
+    update
+    delete
+  }
+}
+
+' === APPLICATION LAYER ===
+package "Application Layer" #FFF3E0 {
+  
+  class WorkoutSessionState {
+    + WorkoutSession? session
+    + bool isLoading
+    + String? error
+    + bool hasUnsavedChanges
+  }
+
+  class WorkoutBuilderState {
+    + WorkoutBuilder builder
+    + Workout? builtWorkout
+    + bool isValid
+  }
+
+  class ExerciseFiltersState {
+    + String? muscleGroup
+    + String? difficulty
+    + String searchQuery
+  }
+
+  class WorkoutStatistics {
+    + Map<String,int> mostUsedMuscleGroups
+    + Map<String,int> mostFrequentExercises
+    + double averageExercisesPerWorkout
+    + int totalWorkouts
+    + {static} calculate()
+  }
+
+  class WorkoutSessionNotifier {
+    + loadWorkout()
+    + updateDate()
+    + updateNotes()
+    + completeWorkout()
+    + uncompleteWorkout()
+    + addExercise()
+    + removeExercise()
+    + replaceExercise()
+    + reorderExercises()
+    + addSet()
+    + updateSet()
+    + removeSet()
+    + undo()
+    + redo()
+    + save()
+  }
+
+  class WorkoutBuilderNotifier {
+    + setId()
+    + setDate()
+    + addExercise()
+    + addExercises()
+    + removeExercise()
+    + setNotes()
+    + markAsCompleted()
+    + markAsDraft()
+    + build()
+    + buildFromTemplate()
+    + reset()
+  }
+
+  class ExerciseFiltersNotifier {
+    + setMuscleGroup()
+    + setDifficulty()
+    + setSearchQuery()
+    + resetFilters()
+  }
+}
+
+' === PRESENTATION LAYER ===
+package "Presentation Layer" #FCE4EC {
+  
+  class HomeScreen
+  class WorkoutDetailScreen
+  class ExerciseCatalogScreen
+  class ExerciseDetailScreen
+  class StatisticsScreen
+
+  class WorkoutCard
+  class ExercisePerformanceWidget
+
+  class HomeViewModel {
+    + loadWorkouts()
+    + deleteWorkout()
+    + createWorkout()
+    + copyWorkout()
+    + formatDate()
+  }
+
+  class WorkoutDetailViewModel {
+    + loadWorkout()
+    + getMainMuscleGroup()
+    + formatDate()
+    + saveWorkout()
+    + deleteWorkout()
+    + updateDate()
+    + updateNotes()
+    + toggleCompleted()
+    + addExercise()
+    + removeExercise()
+    + reorderExercises()
+    + addSet()
+    + updateSet()
+    + removeSet()
+    + undo()
+    + redo()
+  }
+
+  class ExerciseCatalogViewModel {
+    + filterExercises()
+    + getDifficultyString()
+    + getMuscleGroups()
+    + getDifficulties()
+  }
+
+  class ExerciseDetailViewModel {
+    + updateSet()
+    + addSet()
+    + removeSet()
+    + getDescriptionFormated()
+    + getSetInfo()
+    + getPerformanceTypeString()
+    + getDifficultyString()
+  }
+
+  class StatisticsViewModel {
+    + getAverageExercisesString()
+    + getTopMuscleGroups()
+    + getTopExercises()
+    + calculatePercentage()
+  }
+}
+
+' === RELATIONS ===
+
+' Domain internal
+Workout --> "1..*" ExercisePerformance
+ExercisePerformance --> Exercise
+ExercisePerformance --> "*" SetData
+WeightedExercisePerformance --|> ExercisePerformance
+BodyweightExercisePerformance --|> ExercisePerformance
+DurationExercisePerformance --|> ExercisePerformance
+Exercise --> ExerciseCategory
+Exercise --> Equipment
+SetData --> PerformanceType
+WorkoutSession --> WorkoutSessionManager
+WorkoutSession --> WorkoutStatusManager
+WorkoutSession --> ManageWorkoutExercises
+WorkoutSession --> SetManagement
+WorkoutBuilder --> ExercisePerformance
+
+' Repository implementations
+HistoryRepo ..|> IHistoryRepo
+ExerciseRepo ..|> IExerciseRepo
+HistoryRepo --> IExerciseRepo : uses
+HistoryRepo --> ILocalWorkoutDataSource : uses
+LocalWorkoutDataSource ..|> ILocalWorkoutDataSource
+
+' Mappers
+WorkoutMapper --> Workout
+WorkoutMapper --> ExercisePerformance
+WorkoutMapper --> UserHistModel
+ExerciseMapper --> Exercise
+ExerciseMapper --> ExerciseModel
+
+' Database
+LocalWorkoutDataSource --> UserHistDb
+ExerciseRepo --> ExerciseDb
+UserHistDb --> QueryBuilder
+ExerciseDb --> QueryBuilder
+
+' Application → Domain (via providers - shown as usage)
+WorkoutSessionNotifier --> WorkoutSession : creates/manages
+WorkoutBuilderNotifier --> WorkoutBuilder : wraps
+WorkoutSessionNotifier --> WorkoutSessionState : produces
+WorkoutBuilderNotifier --> WorkoutBuilderState : produces
+ExerciseFiltersNotifier --> ExerciseFiltersState : produces
+WorkoutStatistics --> Workout : calculates from
+
+' Presentation → ViewModels → Application/UseCases
+HomeScreen --> HomeViewModel
+WorkoutDetailScreen --> WorkoutDetailViewModel
+ExerciseCatalogScreen --> ExerciseCatalogViewModel
+ExerciseDetailScreen --> ExerciseDetailViewModel
+StatisticsScreen --> StatisticsViewModel
+
+HomeViewModel --> CreateWorkout : uses
+HomeViewModel --> DeleteWorkout : uses
+HomeViewModel --> WorkoutBuilderNotifier : uses
+
+WorkoutDetailViewModel --> SaveWorkout : uses
+WorkoutDetailViewModel --> DeleteWorkout : uses
+WorkoutDetailViewModel --> WorkoutSessionNotifier : uses
+
+ExerciseCatalogViewModel --> IExerciseRepo : uses (via provider)
+ExerciseCatalogViewModel --> ExerciseFiltersNotifier : uses
+
+StatisticsViewModel --> WorkoutStatistics : uses
+
+' Cross-layer real data flow
+HistoryRepo --> IHistoryRepo : implements
+ExerciseRepo --> IExerciseRepo : implements
+
+WorkoutDetailScreen --> WorkoutDetailViewModel
+WorkoutDetailViewModel --> WorkoutSessionNotifier
+WorkoutSessionNotifier --> WorkoutSession
+WorkoutSession --> WorkoutSessionManager
+WorkoutSessionManager --> Workout : stores history
+
+HomeViewModel --> WorkoutBuilderNotifier
+WorkoutBuilderNotifier --> WorkoutBuilder
+WorkoutBuilder --> Workout : builds
+
+ExerciseCatalogViewModel --> IExerciseRepo
+IExerciseRepo <|.. ExerciseRepo
+ExerciseRepo --> ExerciseDb
+ExerciseDb --> "exercise_data.db" : reads from asset
+
+HomeViewModel --> IHistoryRepo : via GetWorkoutHistory
+IHistoryRepo <|.. HistoryRepo
+HistoryRepo --> UserHistDb
+HistoryRepo --> IExerciseRepo
+UserHistDb --> "workout_db.db" : persists
+
+@enduml
